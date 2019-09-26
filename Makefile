@@ -28,7 +28,7 @@ $(TARGET) : $(OBJS)
 	g++ -o $@ $(OBJS) $(LIBS)
 	
 $(OBJDIR)/%.o : %.cpp
-	@[ -d $(OBJDIR) ]
+	@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
 	g++ -c $< -o $@ $(CPPFLAGS)
 
 clean:
