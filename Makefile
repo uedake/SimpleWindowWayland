@@ -7,14 +7,15 @@ all: $(TARGET)
 SOURCES := \
 	WaylandCore.cpp \
 	WaylandCore_registry_handlers.cpp \
-	WaylandCore_seat_handlers.cpp \
 	main.cpp \
 
 LIBRARYS := \
 	wayland-client \
 
+OBJDIR := obj
 
-OBJS := $(SOURCES:.cpp=.o)
+OBJS := $(addprefix $(OBJDIR)/, $(SOURCES:.cpp=.o))
+
 LIBS := $(addprefix -l,$(LIBRARYS) )
 
 DEPENDS = $(OBJS:.o=.d)
@@ -26,7 +27,8 @@ CPPFLAGS := $(CFLAGS)
 $(TARGET) : $(OBJS)
 	g++ -o $@ $(OBJS) $(LIBS)
 	
-%.o : %.cpp
+$(OBJDIR)/%.o : %.cpp
+	@[ -d $(OBJDIR) ]
 	g++ -c $< -o $@ $(CPPFLAGS)
 
 clean:
