@@ -32,22 +32,9 @@ static void handler_global_remove(
     core->registry_listener_global_remove( reg, name );
   }
 }
-static void seat_handler_capabilities(
-  void* data,
-  wl_seat* seat,
-  uint32_t caps )
-{
-  WaylandCore* core = static_cast<WaylandCore*>(data);
-  if( core ){
-    core->seat_listener_capabilities( seat, caps );
-  }
-}
   
 static wl_registry_listener global_handlers = {
   handler_global, handler_global_remove
-};
-static wl_seat_listener seat_listeners = {
-  seat_handler_capabilities,
 };
 
 void WaylandCore::setup_registry_handlers()
@@ -84,12 +71,6 @@ void WaylandCore::registry_listener_global(
   if( strcmp( interface, "wl_shell") == 0 ) {
     obj = wl_registry_bind( reg, name, &wl_shell_interface, 1 );
     mShell = static_cast<wl_shell*>(obj);
-    obj = 0;
-  }
-  if( strcmp( interface, "wl_seat") == 0 ) {
-    obj = wl_registry_bind( reg, name, &wl_seat_interface, 1 );
-    mSeat = static_cast<wl_seat*>(obj);
-    wl_seat_add_listener( mSeat, &seat_listeners, this );
     obj = 0;
   }
 }

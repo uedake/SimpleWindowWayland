@@ -40,7 +40,7 @@ int os_create_mem( int size ) {
 
 WaylandCore::WaylandCore( int width, int height, const char* title )
 : mDisplay(NULL),mRegistry(NULL),mCompositor(NULL),mShm(NULL),
-  mSeat(NULL),mPointer(NULL),
+  mPointer(NULL),
   mShouldClose(false),mWidth(0),mHeight(0)
 {
   mDisplay = wl_display_connect(NULL);
@@ -53,10 +53,6 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
 }
 
 WaylandCore::~WaylandCore(){
-  if( mSeat ) {
-    wl_seat_destroy( mSeat );
-    mSeat = NULL;
-  }
   if( mShm ) {
     wl_shm_destroy( mShm );
     mShm = NULL;
@@ -73,29 +69,6 @@ WaylandCore::~WaylandCore(){
     wl_display_flush( mDisplay );
     wl_display_disconnect( mDisplay );
     mDisplay = NULL;
-  }
-}
-
-void WaylandCore::seat_handle_capabilities(
-  void* data,
-  wl_seat* seat, 
-  uint32_t caps )
-{
-  WaylandCore* core = static_cast<WaylandCore*>(data);
-  if( caps & WL_SEAT_CAPABILITY_POINTER ) {
-    if( core->mPointer == NULL ) {
-      core->mPointer = wl_seat_get_pointer( seat );
-    }
-  }
-  if( !(caps & WL_SEAT_CAPABILITY_POINTER) ) {
-    if( core->mPointer ) {
-      wl_pointer_destroy( core->mPointer );
-      core->mPointer = NULL;
-    }
-  }
-  
-  if( caps & WL_SEAT_CAPABILITY_KEYBOARD ) {
-    
   }
 }
 
