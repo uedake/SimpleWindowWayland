@@ -39,7 +39,7 @@ int handle_cmd(string cmd){
 void set_stdin_nonblocking(bool enable){
   if(enable){
     old_stdin_flag = fcntl(0,F_GETFL); 
-    fcntl(0,F_SETFL, old_stdin_flag | O_DIRECT | FASYNC | O_NONBLOCK);
+    fcntl(0,F_SETFL, old_stdin_flag | O_DSYNC | O_DIRECT | FASYNC | O_NONBLOCK);
   }
   else{
     if(old_stdin_flag) 
