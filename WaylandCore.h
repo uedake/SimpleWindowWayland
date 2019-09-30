@@ -18,6 +18,7 @@ public:
   int  getWidth() const   { return mWidth; }
   int  getHeight() const  { return mHeight; }
   void redrawWindow();
+  void setFullscreen(bool enable);
 private:
   void createWindow( int width, int height, const char* title );  
   void setup_registry_handlers();

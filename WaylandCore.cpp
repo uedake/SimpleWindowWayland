@@ -120,11 +120,11 @@ void WaylandCore::createWindow( int width, int height, const char* title )
   mWidth = width;
   mHeight = height;
   
-  wl_shell_surface* shell_surface = wl_shell_get_shell_surface( mShell, surface );
-  wl_shell_surface_set_toplevel( shell_surface );
+  mShellSurface = wl_shell_get_shell_surface( mShell, surface );
+  this->setFullscreen();
   wl_buffer* wb = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
   wl_shm_pool_destroy( pool ); pool = NULL;
-  wl_shell_surface_set_title( shell_surface, title );
+  wl_shell_surface_set_title( mShellSurface, title );
 
   wl_callback* callback = wl_surface_frame( surface );
   static wl_shell_surface_listener shell_surf_listeners = {
@@ -134,11 +134,10 @@ void WaylandCore::createWindow( int width, int height, const char* title )
   };
 
   
-  wl_shell_surface_add_listener( shell_surface, &shell_surf_listeners, this );
+  wl_shell_surface_add_listener( mShellSurface, &shell_surf_listeners, this );
   wl_callback_add_listener( callback, &frame_listeners, this );
   wl_surface_attach( surface, wb, 0, 0 );
   
-  mShellSurface = shell_surface;
   mSurface.surface = surface;
   mSurface.buffer = wb;
   mSurface.memory  = image_ptr;
@@ -232,8 +231,20 @@ void WaylandCore::redrawWindow()
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
   }
+
   wl_callback* callback = wl_surface_frame( surface );
   wl_surface_attach( surface, mSurface.buffer, 0, 0 );
   wl_callback_add_listener( callback, &frame_listeners, this );
   wl_surface_commit( surface ); 
+}
+
+void WaylandCore::setFullscreen(bool enable)
+{
+	if (enable) {
+		wl_shell_surface_set_fullscreen(mShellSurface,
+						WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL,
+						0, NULL);
+	} else {
+		wl_shell_surface_set_toplevel(mShellSurface);
+  }
 }
