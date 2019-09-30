@@ -35,12 +35,13 @@ int handle_cmd(string cmd){
   return 0;
 }
 
-void set_stdin_nonblocking(bool enable){
+int set_stdin_nonblocking(bool enable){
+  int current = fcntl(0,F_GETFL); 
   if(enable)
-    fcntl(0,F_SETFL,fcntl(0,F_GETFL) | O_NONBLOCK);
+    fcntl(0,F_SETFL, current | O_NONBLOCK);
   else
-    fcntl(0,F_SETFL,fcntl(0,F_GETFL) & ~O_NONBLOCK);
-    
+    fcntl(0,F_SETFL, current & ~O_NONBLOCK);
+  return current;
 }
 
 int get_non_blocking_inotify_fd(char *fn){
@@ -121,7 +122,9 @@ int main(int argc, char **argv ){
 
   mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
   
-  set_stdin_nonblocking(true);
+  int old_stdin_flag = set_stdin_nonblocking(true);
+  cout << "old stdin flag:" << old_stdin_flag << endl;
+
   while(1){
     cout << FIRST_PROMPT << flush;
 
