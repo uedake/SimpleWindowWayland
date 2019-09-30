@@ -129,32 +129,31 @@ int main(int argc, char **argv ){
   set_stdin_nonblocking(true);
   cout << "old stdin flag:" << old_stdin_flag << endl;
 
-  while(1){
-    cout << FIRST_PROMPT << flush;
+  cout << FIRST_PROMPT << flush;
 
-    char buff[BUFF_SIZE]={};
+  char buff[BUFF_SIZE]={};
 
-    while (!mCore->isShouldClose()) {
-        int read_cnt=read(0, buff, BUFF_SIZE);
-        if(read_cnt > 0){
-          cout << "read cnt:" << read_cnt << endl;
-          break;
+  cout << FIRST_PROMPT << flush;
+  while (!mCore->isShouldClose()) {
+      int read_cnt=read(0, buff, BUFF_SIZE);
+      if(read_cnt > 0){
+        cout << "read cnt:" << read_cnt << endl;
+        string cmd="";
+        for(int n=0;n<read_cnt;n++){
+          if(buff[n]==EOF || buff[n]=='\n')
+            break;
+          cmd+=buff[n];
         }
-        inotify_read_events(fd);
-        mCore->pollEvents();
-        usleep(EVENT_LOOP_WAIT_USEC);
-    }
-
-    string cmd="";
-    for(int n=0;n<BUFF_SIZE;n++){
-      if(buff[n]==EOF || buff[n]=='\n')
-        break;
-      cmd+=buff[n];
-    }
-
-    if(handle_cmd(cmd)==1)
-      break;
+        if(handle_cmd(cmd)==1)
+          break;
+        buff={};
+        cout << FIRST_PROMPT << flush;
+      }
+      inotify_read_events(fd);
+      mCore->pollEvents();
+      usleep(EVENT_LOOP_WAIT_USEC);
   }
+
   close(fd);
   set_stdin_nonblocking(false);
 
