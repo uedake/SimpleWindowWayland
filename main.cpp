@@ -135,8 +135,11 @@ int main(int argc, char **argv ){
     char buff[BUFF_SIZE]={};
 
     while (!mCore->isShouldClose()) {
-        if(read(0, buff, BUFF_SIZE) > 0)
+        int read_cnt=read(0, buff, BUFF_SIZE);
+        if(read_cnt > 0){
+          cout << "read cnt:" << read_cnt << endl;
           break;
+        }
         inotify_read_events(fd);
         mCore->pollEvents();
         usleep(EVENT_LOOP_WAIT_USEC);
