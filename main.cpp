@@ -23,6 +23,7 @@ string FIRST_PROMPT = ">>";
 string AFTER_STDOUT_PROMPT = "--";
 
 WaylandCore* mCore;
+int old_stdin_flag;
 
 int handle_cmd(string cmd){
   if (cmd=="exit")
@@ -36,12 +37,12 @@ int handle_cmd(string cmd){
 }
 
 int set_stdin_nonblocking(bool enable){
-  int current = fcntl(0,F_GETFL); 
+  int old_stdin_flag = fcntl(0,F_GETFL); 
   if(enable)
-    fcntl(0,F_SETFL, current | O_NONBLOCK);
+    fcntl(0,F_SETFL, old_stdin_flag | FASYNC | O_NONBLOCK);
   else
-    fcntl(0,F_SETFL, current & ~O_NONBLOCK);
-  return current;
+    fcntl(0,F_SETFL, old_stdin_flag);
+  return old_stdin_flag;
 }
 
 int get_non_blocking_inotify_fd(char *fn){
