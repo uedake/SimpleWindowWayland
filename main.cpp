@@ -36,13 +36,15 @@ int handle_cmd(string cmd){
   return 0;
 }
 
-int set_stdin_nonblocking(bool enable){
-  int old_stdin_flag = fcntl(0,F_GETFL); 
-  if(enable)
-    fcntl(0,F_SETFL, old_stdin_flag | FASYNC | O_NONBLOCK);
-  else
-    fcntl(0,F_SETFL, old_stdin_flag);
-  return old_stdin_flag;
+void set_stdin_nonblocking(bool enable){
+  if(enable){
+    old_stdin_flag = fcntl(0,F_GETFL); 
+    fcntl(0,F_SETFL, old_stdin_flag | O_DIRECT | FASYNC | O_NONBLOCK);
+  }
+  else{
+    if(old_stdin_flag) 
+      fcntl(0,F_SETFL, old_stdin_flag);
+  }
 }
 
 int get_non_blocking_inotify_fd(char *fn){
@@ -123,7 +125,7 @@ int main(int argc, char **argv ){
 
   mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
   
-  int old_stdin_flag = set_stdin_nonblocking(true);
+  set_stdin_nonblocking(true);
   cout << "old stdin flag:" << old_stdin_flag << endl;
 
   while(1){
@@ -151,6 +153,7 @@ int main(int argc, char **argv ){
       break;
   }
   close(fd);
+  set_stdin_nonblocking(false);
 
   delete mCore;mCore = NULL;
   return 0;
