@@ -121,7 +121,7 @@ void WaylandCore::createWindow( int width, int height, const char* title )
   mHeight = height;
   
   mShellSurface = wl_shell_get_shell_surface( mShell, surface );
-  this->setFullscreen();
+  this->setFullscreen(true);
   wl_buffer* wb = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
   wl_shm_pool_destroy( pool ); pool = NULL;
   wl_shell_surface_set_title( mShellSurface, title );
