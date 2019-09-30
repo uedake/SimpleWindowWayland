@@ -146,7 +146,6 @@ int main(int argc, char **argv ){
         }
         if(handle_cmd(cmd)==1)
           break;
-        buff={};
         cout << FIRST_PROMPT << flush;
       }
       inotify_read_events(fd);
