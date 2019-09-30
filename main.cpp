@@ -15,6 +15,7 @@
 
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
+#define BUFF_SIZE (256)
 
 using namespace std;
 
@@ -39,7 +40,7 @@ int handle_cmd(string cmd){
 void set_stdin_nonblocking(bool enable){
   if(enable){
     old_stdin_flag = fcntl(0,F_GETFL); 
-    fcntl(0,F_SETFL, old_stdin_flag | O_DSYNC | O_DIRECT | FASYNC | O_NONBLOCK);
+    fcntl(0,F_SETFL, old_stdin_flag | O_NONBLOCK);
   }
   else{
     if(old_stdin_flag) 
@@ -131,22 +132,21 @@ int main(int argc, char **argv ){
   while(1){
     cout << FIRST_PROMPT << flush;
 
-    char a;
-    while(!mCore->isShouldClose()){
-      a = getchar();
-      if(a!=EOF){
-        break;
-      }
-      else{
+    char buff[BUFF_SIZE]={};
+
+    while (!mCore->isShouldClose()) {
+        if(read(0, buff, BUFF_SIZE) != -1)
+          break;
         inotify_read_events(fd);
         mCore->pollEvents();
         usleep(EVENT_LOOP_WAIT_USEC);
-      }
     }
-    string cmd=""; 
-    while(a!=EOF && a!='\n'){
-      cmd+=a;
-      a = getchar();
+
+    string cmd="";
+    for(int n=0;n<BUFF_SIZE;n++){
+      if(buff[n]==EOF || buff[n]=='\n')
+        break;
+      cmd+=buff[n];
     }
 
     if(handle_cmd(cmd)==1)
