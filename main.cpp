@@ -135,7 +135,7 @@ int main(int argc, char **argv ){
     char buff[BUFF_SIZE]={};
 
     while (!mCore->isShouldClose()) {
-        if(read(0, buff, BUFF_SIZE) != -1)
+        if(read(0, buff, BUFF_SIZE) > 0)
           break;
         inotify_read_events(fd);
         mCore->pollEvents();
