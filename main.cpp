@@ -9,46 +9,65 @@
 #include <fcntl.h>
 #include <sys/inotify.h>
 
+#define INOTIFY_EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define INOTIFY_BUF_LEN     ( 1024 * ( INOTIFY_EVENT_SIZE + 16 ) )
+#define CMD_BUF_SIZE (256)
+
+#define FIRST_PROMPT  ">>"
+#define AFTER_STDOUT_PROMPT  "--"
+
 #define WIDTH 640
 #define HEIGHT 480
-#define TITLE  "DocomoTest"
-
-#define EVENT_SIZE  ( sizeof (struct inotify_event) )
-#define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
-#define BUFF_SIZE (256)
+#define TITLE "DocomoTest"
 
 using namespace std;
 
-int EVENT_LOOP_WAIT_USEC=10*1000;
-string FIRST_PROMPT = ">>";
-string AFTER_STDOUT_PROMPT = "--";
+static int EVENT_LOOP_WAIT_USEC=10*1000;
+static WaylandCore* mCore=NULL;
 
-WaylandCore* mCore;
-int old_stdin_flag;
+static void init_window(){
+  if(mCore==NULL)
+    mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
+}
 
-int handle_cmd(string cmd){
+static int handle_cmd(string cmd){
   if (cmd=="exit")
     return 1;
   else if (cmd=="help")
     cout << "Here is help" << endl;
+  else if (cmd=="show")
+    init_window();
+  else if (cmd=="exception")
+    throw "test exception";
   else
     cout << cmd  << " is not a command" << endl;
   
   return 0;
 }
 
-void set_stdin_nonblocking(bool enable){
-  if(enable){
+static int set_stdin_nonblocking(bool enable){
+  static bool inited=false;
+  static int old_stdin_flag;
+  if(!inited){
     old_stdin_flag = fcntl(0,F_GETFL); 
-    fcntl(0,F_SETFL, old_stdin_flag | O_NONBLOCK);
+    inited=true;
   }
-  else{
-    if(old_stdin_flag) 
-      fcntl(0,F_SETFL, old_stdin_flag);
+
+  int ret;
+
+  if(enable)
+    ret=fcntl(0,F_SETFL, old_stdin_flag | O_NONBLOCK);
+  else
+    ret=fcntl(0,F_SETFL, old_stdin_flag & ~O_NONBLOCK);
+  
+  if (ret == -1) {
+    perror( "set_stdin_nonblocking" );
+    return -1;
   }
+  return 0;
 }
 
-int get_non_blocking_inotify_fd(char *fn){
+static int get_non_blocking_inotify_fd(char *fn){
   int fd = inotify_init();
   if (fd == -1) {
     perror( "inotify_init" );
@@ -63,28 +82,29 @@ int get_non_blocking_inotify_fd(char *fn){
     perror( "inotify_add_watch" );
     close(fd);
     return -1;
-  }
-    
+  }    
   return fd;
 }
 
-void handle_file_modify(const char* name){
-  cout << "\n" << name << " is modified" << endl;
-  cout << AFTER_STDOUT_PROMPT << flush;
-}
-void handle_file_create(const char* name){
-  cout << "\n" << name << " is created" << endl;
-  cout << AFTER_STDOUT_PROMPT << flush;
-}
-void handle_file_delete(const char* name){
-  cout << "\n" << name << " is deleted" << endl;
+static void print_in_prompt(string str){
+  cout << "\n" << str << endl;
   cout << AFTER_STDOUT_PROMPT << flush;
 }
 
-int inotify_read_events( int fd )
+static void handle_file_modify(string name){
+  print_in_prompt(name + " is modified");
+}
+static void handle_file_create(string name){
+  print_in_prompt(name + " is created");
+}
+static void handle_file_delete(string name){
+  print_in_prompt(name + " is deleted");
+}
+
+static int inotify_read_events( int fd )
 {
-  char buffer[BUF_LEN];
-  int length = read( fd, buffer, BUF_LEN );
+  char buffer[INOTIFY_BUF_LEN];
+  int length = read( fd, buffer, INOTIFY_BUF_LEN );
   if( length < 0 ) return -1;
 
   int count = 0;
@@ -92,22 +112,18 @@ int inotify_read_events( int fd )
   while ( i < length ) {
         struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
 
-
         char* name=(char*)"file";
         if(event->len>0)
           name=event->name;
 
-        if(event->mask & IN_CREATE ) {
+        if(event->mask & IN_CREATE )
           handle_file_create(name);
-        }
-        if(event->mask & IN_MODIFY ) {
+        if(event->mask & IN_MODIFY )
           handle_file_modify(name);
-        }
-        if(event->mask & IN_DELETE){
+        if(event->mask & IN_DELETE)
           handle_file_delete(name);
-        }
 
-        i += EVENT_SIZE + event->len;
+        i += INOTIFY_EVENT_SIZE + event->len;
         count++;
   }
   return count;
@@ -124,39 +140,42 @@ int main(int argc, char **argv ){
   if(fd==-1)
     return 2;
 
-  mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
-  
-  set_stdin_nonblocking(true);
-  cout << "old stdin flag:" << old_stdin_flag << endl;
+  try{
 
-  cout << FIRST_PROMPT << flush;
+    //init_window();
+    
+    if(set_stdin_nonblocking(true)==-1){
+      return 3;
+    }
 
-  char buff[BUFF_SIZE]={};
-
-  cout << FIRST_PROMPT << flush;
-  while (!mCore->isShouldClose()) {
-      int read_cnt=read(0, buff, BUFF_SIZE);
-      if(read_cnt > 0){
-        cout << "read cnt:" << read_cnt << endl;
-        string cmd="";
-        for(int n=0;n<read_cnt;n++){
-          if(buff[n]==EOF || buff[n]=='\n')
+    char buff[CMD_BUF_SIZE]={};
+    cout << FIRST_PROMPT << flush;
+    while (mCore == NULL || !mCore->isShouldClose()) {
+        int read_cnt=read(0, buff, CMD_BUF_SIZE);
+        if(read_cnt > 0){
+          string cmd="";
+          for(int n=0;n<read_cnt;n++){
+            if(buff[n]==EOF || buff[n]=='\n')
+              break;
+            cmd+=buff[n];
+          }
+          if(handle_cmd(cmd)==1)
             break;
-          cmd+=buff[n];
+          cout << FIRST_PROMPT << flush;
         }
-        if(handle_cmd(cmd)==1)
-          break;
-        cout << FIRST_PROMPT << flush;
-      }
-      inotify_read_events(fd);
-      mCore->pollEvents();
-      usleep(EVENT_LOOP_WAIT_USEC);
+        inotify_read_events(fd);
+        if(mCore!=NULL)
+          mCore->pollEvents();
+        usleep(EVENT_LOOP_WAIT_USEC);
+    }
   }
-
+  catch(...){
+    cout << "exception occured" << endl;
+  }
   close(fd);
   set_stdin_nonblocking(false);
-
   delete mCore;mCore = NULL;
+  cout << "Exited" << endl;
   return 0;
 }
 

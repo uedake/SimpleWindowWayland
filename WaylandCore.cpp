@@ -184,6 +184,43 @@ bool WaylandCore::isShouldClose() {
   return mShouldClose;
 }
 
+void WaylandCore::redrawWindow()
+{
+  wl_surface* surface = mSurface.surface;
+
+  on_redraw();
+
+  wl_callback* callback = wl_surface_frame( surface );
+  wl_surface_attach( surface, mSurface.buffer, 0, 0 );
+  wl_callback_add_listener( callback, &frame_listeners, this );
+  wl_surface_commit( surface ); 
+}
+
+void WaylandCore::setFullscreen(bool enable)
+{
+	if (enable) {
+		wl_shell_surface_set_fullscreen(mShellSurface,
+						WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL,
+						0, NULL);
+	} else {
+		wl_shell_surface_set_toplevel(mShellSurface);
+  }
+}
+
+void WaylandCore::on_redraw(){
+  wl_surface* surface = mSurface.surface;
+  int width =  mWidth;
+  int height = mHeight;
+  
+  uint32_t val = 0xFF0000FF;
+  for(int y=0;y<height;++y) {
+    uint8_t* p = static_cast<uint8_t*>( mSurface.memory ) + width * y * sizeof(uint32_t);
+    for(int x=0;x<width;++x) {
+      reinterpret_cast<uint32_t*>(p)[x] = val;
+    }
+  }
+}
+
 uint32_t calcColor()
 {
   static int hue = 0;
@@ -212,11 +249,10 @@ uint32_t calcColor()
   return (r << 16) | (g << 8) | b;
 }
 
-void WaylandCore::redrawWindow()
-{
+void SampleWaylandCore::on_redraw(){
+  wl_surface* surface = mSurface.surface;
   int width =  mWidth;
   int height = mHeight;
-  wl_surface* surface = mSurface.surface;
   static int HEIGHT = height;
   HEIGHT -= 5;
   if( HEIGHT < 0 ) { HEIGHT = height; }
@@ -230,21 +266,5 @@ void WaylandCore::redrawWindow()
     for(int x=0;x<width;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
-  }
-
-  wl_callback* callback = wl_surface_frame( surface );
-  wl_surface_attach( surface, mSurface.buffer, 0, 0 );
-  wl_callback_add_listener( callback, &frame_listeners, this );
-  wl_surface_commit( surface ); 
-}
-
-void WaylandCore::setFullscreen(bool enable)
-{
-	if (enable) {
-		wl_shell_surface_set_fullscreen(mShellSurface,
-						WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL,
-						0, NULL);
-	} else {
-		wl_shell_surface_set_toplevel(mShellSurface);
   }
 }
