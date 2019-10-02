@@ -72,7 +72,7 @@ static int handle_cmd(string cmd){
     mCore->setFullscreen(true);
   else if (args[0]=="fill"){
     try{
-      int32_t col=stoi(args[1]);
+      int32_t col=stoi(args[1],nullptr,0);
       mCore->setFillColor(col);
     }
     catch(invalid_argument ex){
