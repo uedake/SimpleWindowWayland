@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <wayland-client.h>
 
+struct ImgBuf {
+  wl_buffer*  buffer;
+  void*       memory;
+}
 
 class WaylandCore {
 public:
@@ -28,15 +32,12 @@ private:
 public:
   void registry_listener_global( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
   void registry_listener_global_remove( wl_registry* reg, uint32_t name );
-
+  
 protected:
   int  mWidth, mHeight;
   bool mShouldClose;
 
-  struct ImgBuf {
-    wl_buffer*  buffer;
-    void*       memory;
-  } mImgBuf;
+  struct ImgBuf mImgBuf;
 
 private:
   wl_display* mDisplay;
