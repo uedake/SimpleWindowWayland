@@ -38,6 +38,7 @@ protected:
   int  mWidth, mHeight;
   bool mShouldClose;
 
+  wl_surface* mSurface;
   struct ImgBuf mImgBuf;
 
 private:
@@ -48,7 +49,6 @@ private:
   wl_shell*   mShell;
   wl_shm* mShm;
   
-  wl_surface* mSurface;
   wl_shell_surface* mShellSurface;
 
 };

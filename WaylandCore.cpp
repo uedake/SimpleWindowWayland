@@ -154,7 +154,7 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
 
   wl_callback* callback = wl_surface_frame( mSurface );
   wl_callback_add_listener( callback, &frame_listeners, this );
-  wl_surface_attach( mSurface, mImgBuf.wb, 0, 0 );  
+  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );  
 
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
   wl_surface_commit( mSurface );
@@ -264,20 +264,16 @@ uint32_t calcColor()
 }
 
 void SampleWaylandCore::on_redraw(){
-  wl_surface* surface = mSurface;
-  int width =  mWidth;
-  int height = mHeight;
-  static int HEIGHT = height;
+  static int HEIGHT = mHeight;
   HEIGHT -= 5;
-  if( HEIGHT < 0 ) { HEIGHT = height; }
-  wl_surface_damage( surface, 0, 0, width, HEIGHT );
-
+  if( HEIGHT < 0 ) { HEIGHT = mHeight; }
+  wl_surface_damage( mSurface, 0, 0, mWidth, HEIGHT );
   
   uint32_t val = calcColor();
   val |= 0xFF000000;
-  for(int y=0;y<height;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mImgBuf.memory ) + width * y * sizeof(uint32_t);
-    for(int x=0;x<width;++x) {
+  for(int y=0;y<mHeight;++y) {
+    uint8_t* p = static_cast<uint8_t*>( mImgBuf.memory ) + mWidth * y * sizeof(uint32_t);
+    for(int x=0;x<mWidth;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
   }
