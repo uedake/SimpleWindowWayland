@@ -27,7 +27,7 @@ public:
   bool isShouldClose() { return mShouldClose; }
   int  getWidth() const   { return mWidth; }
   int  getHeight() const  { return mHeight; }
-  void setFillColor() const  { return mFillColor; }
+  void setFillColor(int32_t col) const  { mFillColor=col; }
 
 protected:
   int  mWidth, mHeight;

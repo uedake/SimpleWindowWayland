@@ -231,7 +231,7 @@ void WaylandCore::setFullscreen(bool enable)
 }
 
 bool WaylandCore::on_redraw(){
-  fill_buf(mFillColor);
+  fill_buf(mFillColor,mImgBuf.memory,mWidth, mHeight);
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );
   return true;
 }
