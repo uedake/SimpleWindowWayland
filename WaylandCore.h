@@ -6,6 +6,7 @@
 struct ImgBuf {
   wl_buffer*  buffer;
   void*       memory;
+  bool        ready;
 };
 
 class WaylandCore {
