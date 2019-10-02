@@ -55,7 +55,7 @@ static vector<string> split(const string &s, char delim) {
 }
 
 static int handle_cmd(string cmd){
-  vector<string> args=split(cmd," ");
+  vector<string> args=split(cmd,' ');
 
   if (args[0]=="exit")
     return 1;
