@@ -11,7 +11,7 @@
 
 WaylandCore::WaylandCore( int width, int height, const char* title )
 : mDisplay(NULL),mRegistry(NULL),mCompositor(NULL),mShm(NULL),
-  mShouldClose(false),mWidth(0),mHeight(0)
+  mShouldClose(false),mWidth(0),mHeight(0),mFillColor(0xFF0000FF)
 {
   mDisplay = wl_display_connect(NULL);
   setup_registry_handlers();//wait till registory is available
@@ -19,7 +19,7 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
   if( mDisplay ) {
     mRegistry = wl_display_get_registry( mDisplay );
   }
-  createWindow( width, height, title, false, 0xFF0000FF);
+  createWindow( width, height, title, false);
 }
 
 WaylandCore::~WaylandCore(){
@@ -142,7 +142,7 @@ static void setFrameCallback(wl_surface* surface,void * data){
   wl_callback_add_listener( callback, &frame_listeners, data);
 }
 
-static void fill_color(uint32_t val,void* mem,int width,int height){
+static void fill_buf(uint32_t val,void* mem,int width,int height){
   for(int y=0;y<height;++y) {
     uint8_t* p = static_cast<uint8_t*>( mem ) + width * y * sizeof(uint32_t);
     for(int x=0;x<width;++x) {
@@ -151,7 +151,7 @@ static void fill_color(uint32_t val,void* mem,int width,int height){
   }
 }
 
-void WaylandCore::createWindow( int width, int height, const char* title, bool fullscreen, int32_t fill_color)
+void WaylandCore::createWindow( int width, int height, const char* title, bool fullscreen)
 {
   if( mDisplay == NULL || mCompositor == NULL ) {
     throw "createWindow: unexpected error";
@@ -168,7 +168,7 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
   if(!mImgBuf.ready){
     throw "createWindow: failed to create buffer";
   }
-  fill_color(fill_color,mImgBuf.memory,mWidth, mHeight);
+  fill_buf(mFillColor,mImgBuf.memory,mWidth, mHeight);
   wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
   wl_surface_commit( mSurface );
@@ -210,10 +210,6 @@ void WaylandCore::pollEvents() {
   }
 }
 
-bool WaylandCore::isShouldClose() {
-  return mShouldClose;
-}
-
 void WaylandCore::redrawWindow()
 {
   bool changed=on_redraw();
@@ -235,7 +231,7 @@ void WaylandCore::setFullscreen(bool enable)
 }
 
 bool WaylandCore::on_redraw(){
-  fill_color(0xFF00FF00);
+  fill_buf(mFillColor);
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );
   return true;
 }

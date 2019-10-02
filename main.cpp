@@ -35,19 +35,41 @@ static void init_window(bool basic){
     mCore = new SampleWaylandCore(WIDTH, HEIGHT, TITLE);
 }
 
+static vector<string> split(const string &s, char delim) {
+    vector<string> elems;
+    string item;
+    for (char ch: s) {
+        if (ch == delim) {
+            if (!item.empty())
+                elems.push_back(item);
+            item.clear();
+        }
+        else {
+            item += ch;
+        }
+    }
+    if (!item.empty())
+        elems.push_back(item);
+    return elems;
+}
+
 static int handle_cmd(string cmd){
-  if (cmd=="exit")
+  vector<string> args=split(cmd," ");
+
+  if (args[0]=="exit")
     return 1;
-  else if (cmd=="help")
+  else if (args[0]=="help")
     cout << "Here is help" << endl;
-  else if (cmd=="show")
+  else if (args[0]=="show")
     init_window(false);
-  else if (cmd=="show basic")
-    init_window(true);
-  else if (cmd=="top")
+  else if (args[0]=="top")
     mCore->setFullscreen(false);
-  else if (cmd=="full")
+  else if (args[0]=="full")
     mCore->setFullscreen(true);
+  else if (args[0]=="fill"){
+    int32_t col=stoi(args[1]);
+    mCore->setFillColor(col);
+  }
   else if (cmd=="exception")
     throw "test exception";
   else
