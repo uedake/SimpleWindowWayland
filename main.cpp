@@ -25,8 +25,13 @@ using namespace std;
 static int EVENT_LOOP_WAIT_USEC=10*1000;
 static WaylandCore* mCore=NULL;
 
-static void init_window(){
-  if(mCore==NULL)
+static void init_window(bool basic){
+  if(mCore!=NULL)
+    delete mCore;mCore = NULL;
+  
+  if(basic)
+    mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
+  else
     mCore = new SampleWaylandCore(WIDTH, HEIGHT, TITLE);
 }
 
@@ -36,7 +41,13 @@ static int handle_cmd(string cmd){
   else if (cmd=="help")
     cout << "Here is help" << endl;
   else if (cmd=="show")
-    init_window();
+    init_window(false);
+  else if (cmd=="show basic")
+    init_window(true);
+  else if (cmd=="top")
+    mCore.setFullscreen(false);
+  else if (cmd=="full")
+    mCore.setFullscreen(true);
   else if (cmd=="exception")
     throw "test exception";
   else
@@ -141,9 +152,7 @@ int main(int argc, char **argv ){
     return 2;
 
   try{
-
-    //init_window();
-    
+    //init_window();    
     if(set_stdin_nonblocking(true)==-1){
       return 3;
     }
