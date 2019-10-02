@@ -114,7 +114,7 @@ static wl_buffer* createBuffer(wl_shm* shm,int size){
   return wb;
 }
 
-static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,object data){
+static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,void * data){
   wl_shell_surface* shellSurface = wl_shell_get_shell_surface( shell, surface );
   wl_shell_surface_set_title( shellSurface, title );
   static wl_shell_surface_listener shell_surf_listeners = {
