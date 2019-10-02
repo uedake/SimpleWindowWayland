@@ -8,6 +8,7 @@
 
 #include <fcntl.h>
 #include <sys/inotify.h>
+#include <vector>
 
 #define INOTIFY_EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define INOTIFY_BUF_LEN     ( 1024 * ( INOTIFY_EVENT_SIZE + 16 ) )
