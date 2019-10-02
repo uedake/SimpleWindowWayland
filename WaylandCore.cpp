@@ -102,12 +102,13 @@ static wl_callback_listener frame_listeners = {
 };
 
 static struct ImgBuf createBuffer(wl_shm* shm,int width, int height){
+  struct ImgBuf imgbuf;
   int stride = width * sizeof(uint32_t);
   int size = stride * height;
 
   int fd = create_shared_fd( size );
   if( fd < 0 ) {
-    return NULL;
+    return imgbuf;
   }
   void* image_ptr = mmap( NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
   wl_shm_pool* pool = wl_shm_create_pool( shm, fd, size );
@@ -115,10 +116,10 @@ static struct ImgBuf createBuffer(wl_shm* shm,int width, int height){
   wl_buffer* wb = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
   wl_shm_pool_destroy( pool ); pool = NULL;
 
-  struct ImgBuf imgbuf;
   imgbuf.buffer = wb;
   imgbuf.memory  = image_ptr;
-
+  imgbuf.ready = true;
+  
   return imgbuf;
 }
 
@@ -147,6 +148,9 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
   this->setFullscreen(fullscreen);
 
   mImgbuf = createBuffer(mShm,mWidth,mHeight);
+  if(!mImgbuf.ready){
+    return;
+  }
 
   wl_callback* callback = wl_surface_frame( mSurface );
   wl_callback_add_listener( callback, &frame_listeners, this );
