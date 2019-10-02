@@ -10,7 +10,7 @@
 #include "WaylandCore.h"
 
 
-int os_create_mem( int size ) {
+static int create_shared_fd( int size ) {
   static const char fmt[] = "/weston-shared-XXXXXX";
   const char* path = NULL;
   char* name = NULL;
@@ -40,7 +40,6 @@ int os_create_mem( int size ) {
 
 WaylandCore::WaylandCore( int width, int height, const char* title )
 : mDisplay(NULL),mRegistry(NULL),mCompositor(NULL),mShm(NULL),
-  mPointer(NULL),
   mShouldClose(false),mWidth(0),mHeight(0)
 {
   mDisplay = wl_display_connect(NULL);
@@ -101,40 +100,50 @@ static void frame_redraw( void* data, wl_callback* callback, uint32_t time )
 static wl_callback_listener frame_listeners = {
   frame_redraw,
 };
-  
+
+static wl_buffer* createBuffer(wl_shm* shm,int size){
+  int fd = create_shared_fd( size );
+  if( fd < 0 ) {
+    return NULL;
+  }
+  void* image_ptr = mmap( NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
+  wl_shm_pool* pool = wl_shm_create_pool( shm, fd, size );
+  memset( image_ptr, 0x00, size );
+  wl_buffer* wb = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
+  wl_shm_pool_destroy( pool ); pool = NULL;
+  return wb;
+}
+
+static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,object data){
+  wl_shell_surface* shellSurface = wl_shell_get_shell_surface( shell, surface );
+  wl_shell_surface_set_title( shellSurface, title );
+  static wl_shell_surface_listener shell_surf_listeners = {
+    shell_surface_handler_ping,
+    shell_surface_handler_configure,
+    shell_surface_handler_popup_done,
+  };  
+  wl_shell_surface_add_listener( shellSurface, &shell_surf_listeners, data );
+  return shellSurface;
+}
+
 void WaylandCore::createWindow( int width, int height, const char* title )
 {
   if( mDisplay == NULL || mCompositor == NULL ) {
     return;
   }
-  int stride = width * sizeof(uint32_t);
-  int size = stride * height;
-  int fd = os_create_mem( size );
-  if( fd < 0 ) {
-    return;
-  }
-  void* image_ptr = mmap( NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
-  wl_surface* surface = wl_compositor_create_surface( mCompositor );
-  wl_shm_pool* pool = wl_shm_create_pool( mShm, fd, size );
-  memset( image_ptr, 0x00, size );
   mWidth = width;
   mHeight = height;
-  
-  mShellSurface = wl_shell_get_shell_surface( mShell, surface );
+
+  wl_surface* surface = wl_compositor_create_surface( mCompositor );
+
+  mShellSurface = wl_shell_get_shell_surface(title, mShell, surface,this);
   this->setFullscreen(true);
-  wl_buffer* wb = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
-  wl_shm_pool_destroy( pool ); pool = NULL;
-  wl_shell_surface_set_title( mShellSurface, title );
+
+  int stride = width * sizeof(uint32_t);
+  int size = stride * height;
+  wl_buffer* wb = createBuffer(mShm,size);
 
   wl_callback* callback = wl_surface_frame( surface );
-  static wl_shell_surface_listener shell_surf_listeners = {
-    shell_surface_handler_ping,
-    shell_surface_handler_configure,
-    shell_surface_handler_popup_done,
-  };
-
-  
-  wl_shell_surface_add_listener( mShellSurface, &shell_surf_listeners, this );
   wl_callback_add_listener( callback, &frame_listeners, this );
   wl_surface_attach( surface, wb, 0, 0 );
   

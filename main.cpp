@@ -27,7 +27,7 @@ static WaylandCore* mCore=NULL;
 
 static void init_window(){
   if(mCore==NULL)
-    mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
+    mCore = new SampleWaylandCore(WIDTH, HEIGHT, TITLE);
 }
 
 static int handle_cmd(string cmd){

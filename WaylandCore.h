@@ -42,11 +42,10 @@ protected:
 private:
   wl_display* mDisplay;
   wl_registry* mRegistry;
+
   wl_compositor* mCompositor;
   wl_shell*   mShell;
   wl_shm* mShm;
-  wl_pointer* mPointer;
-  wl_keyboard* mKeyboard;
   
   wl_shell_surface* mShellSurface;
 
