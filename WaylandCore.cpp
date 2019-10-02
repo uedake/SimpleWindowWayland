@@ -144,17 +144,17 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
   mHeight = height;
 
   mSurface = wl_compositor_create_surface( mCompositor );
-  mShellSurface = wl_shell_get_shell_surface(title, mShell, mSurface, this);
+  mShellSurface = createShellSurface(title, mShell, mSurface, this);
   this->setFullscreen(fullscreen);
 
-  mImgbuf = createBuffer(mShm,mWidth,mHeight);
-  if(!mImgbuf.ready){
+  mImgBuf = createBuffer(mShm,mWidth,mHeight);
+  if(!mImgBuf.ready){
     return;
   }
 
   wl_callback* callback = wl_surface_frame( mSurface );
   wl_callback_add_listener( callback, &frame_listeners, this );
-  wl_surface_attach( mSurface, mImgbuf.wb, 0, 0 );  
+  wl_surface_attach( mSurface, mImgBuf.wb, 0, 0 );  
 
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
   wl_surface_commit( mSurface );
@@ -205,7 +205,7 @@ void WaylandCore::redrawWindow()
   on_redraw();
 
   wl_callback* callback = wl_surface_frame( surface );
-  wl_surface_attach( surface, mImgbuf.buffer, 0, 0 );
+  wl_surface_attach( surface, mImgBuf.buffer, 0, 0 );
   wl_callback_add_listener( callback, &frame_listeners, this );
   wl_surface_commit( surface ); 
 }
@@ -228,7 +228,7 @@ void WaylandCore::on_redraw(){
   
   uint32_t val = 0xFF0000FF;
   for(int y=0;y<height;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mImgbuf.memory ) + width * y * sizeof(uint32_t);
+    uint8_t* p = static_cast<uint8_t*>( mImgBuf.memory ) + width * y * sizeof(uint32_t);
     for(int x=0;x<width;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
@@ -276,7 +276,7 @@ void SampleWaylandCore::on_redraw(){
   uint32_t val = calcColor();
   val |= 0xFF000000;
   for(int y=0;y<height;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mImgbuf.memory ) + width * y * sizeof(uint32_t);
+    uint8_t* p = static_cast<uint8_t*>( mImgBuf.memory ) + width * y * sizeof(uint32_t);
     for(int x=0;x<width;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
