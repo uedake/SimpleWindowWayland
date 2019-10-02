@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <wayland-client.h>
 
+using std;
+
 struct ImgBuf {
   wl_buffer*  buffer;
   void*       memory;
