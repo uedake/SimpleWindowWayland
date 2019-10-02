@@ -52,7 +52,7 @@ private:
   wl_shell_surface* mShellSurface;
 
 };
-class SampleWaylandCore :WaylandCore{
+class SampleWaylandCore :public WaylandCore{
   using WaylandCore::WaylandCore;
   void on_redraw() override;
 };
