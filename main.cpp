@@ -64,7 +64,7 @@ static int handle_cmd(string cmd){
     cout << "Here is help" << endl;
   else if(args[0]=="show" && argc==2 && args[1]=="basic")
     init_window(true);
-  else if (args[0]=="show"){
+  else if (args[0]=="show")
     init_window(false);
   else if (args[0]=="top")
     mCore->setFullscreen(false);
