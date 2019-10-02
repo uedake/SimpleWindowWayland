@@ -9,35 +9,6 @@
 
 #include "WaylandCore.h"
 
-
-static int create_shared_fd( int size ) {
-  static const char fmt[] = "/weston-shared-XXXXXX";
-  const char* path = NULL;
-  char* name = NULL;
-  int fd = -1;
-  path = getenv("XDG_RUNTIME_DIR");
-  if( !path ) {
-    return -1;
-  }
-  name = (char*) malloc( strlen(path) + sizeof(fmt) );
-  if( !name ) {
-    return -1;
-  }
-  strcpy( name, path );
-  strcat( name, fmt );
-  
-  fd = mkostemp( name, O_CLOEXEC );
-  if( fd >= 0 ) {
-    unlink(name);
-  }
-  free(name); name = NULL;
-  if( ftruncate( fd, size ) < 0 ) {
-    close(fd);
-    return -1;
-  }
-  return fd;
-}
-
 WaylandCore::WaylandCore( int width, int height, const char* title )
 : mDisplay(NULL),mRegistry(NULL),mCompositor(NULL),mShm(NULL),
   mShouldClose(false),mWidth(0),mHeight(0)
@@ -48,7 +19,7 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
   if( mDisplay ) {
     mRegistry = wl_display_get_registry( mDisplay );
   }
-  createWindow( width, height, title, false);
+  createWindow( width, height, title, false, 0xFF0000FF);
 }
 
 WaylandCore::~WaylandCore(){
@@ -86,9 +57,11 @@ static void shell_surface_handler_configure(
   int32_t height )
 {
 }
+
 static void shell_surface_handler_popup_done( void *data, struct wl_shell_surface *shell_surface )
 {
 }
+
 static void frame_redraw( void* data, wl_callback* callback, uint32_t time )
 {
   WaylandCore* core = static_cast<WaylandCore*>(data);
@@ -97,9 +70,38 @@ static void frame_redraw( void* data, wl_callback* callback, uint32_t time )
     core->redrawWindow();
   }
 }
+
 static wl_callback_listener frame_listeners = {
   frame_redraw,
 };
+
+static int create_shared_fd( int size ) {
+  static const char fmt[] = "/weston-shared-XXXXXX";
+  const char* path = NULL;
+  char* name = NULL;
+  int fd = -1;
+  path = getenv("XDG_RUNTIME_DIR");
+  if( !path ) {
+    return -1;
+  }
+  name = (char*) malloc( strlen(path) + sizeof(fmt) );
+  if( !name ) {
+    return -1;
+  }
+  strcpy( name, path );
+  strcat( name, fmt );
+  
+  fd = mkostemp( name, O_CLOEXEC );
+  if( fd >= 0 ) {
+    unlink(name);
+  }
+  free(name); name = NULL;
+  if( ftruncate( fd, size ) < 0 ) {
+    close(fd);
+    return -1;
+  }
+  return fd;
+}
 
 static struct ImgBuf createBuffer(wl_shm* shm,int width, int height){
   struct ImgBuf imgbuf;
@@ -135,10 +137,24 @@ static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,
   return shellSurface;
 }
 
-void WaylandCore::createWindow( int width, int height, const char* title, bool fullscreen)
+static void setFrameCallback(wl_surface* surface,void * data){
+  wl_callback* callback = wl_surface_frame( surface );
+  wl_callback_add_listener( callback, &frame_listeners, data);
+}
+
+static void fill_color(uint32_t val,void* mem,int width,int height){
+  for(int y=0;y<height;++y) {
+    uint8_t* p = static_cast<uint8_t*>( mem ) + width * y * sizeof(uint32_t);
+    for(int x=0;x<width;++x) {
+      reinterpret_cast<uint32_t*>(p)[x] = val;
+    }
+  }
+}
+
+void WaylandCore::createWindow( int width, int height, const char* title, bool fullscreen, int32_t fill_color)
 {
   if( mDisplay == NULL || mCompositor == NULL ) {
-    return;
+    throw "createWindow: unexpected error";
   }
   mWidth = width;
   mHeight = height;
@@ -147,15 +163,13 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
   mShellSurface = createShellSurface(title, mShell, mSurface, this);
   this->setFullscreen(fullscreen);
 
+  setFrameCallback(mSurface,this);
   mImgBuf = createBuffer(mShm,mWidth,mHeight);
   if(!mImgBuf.ready){
-    return;
+    throw "createWindow: failed to create buffer";
   }
-
-  wl_callback* callback = wl_surface_frame( mSurface );
-  wl_callback_add_listener( callback, &frame_listeners, this );
-  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );  
-
+  fill_color(fill_color,mImgBuf.memory,mWidth, mHeight);
+  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
   wl_surface_commit( mSurface );
 }
@@ -173,6 +187,7 @@ void WaylandCore::waitEvents() {
   
   return;
 }
+
 void WaylandCore::pollEvents() {
   if( mDisplay == NULL || mRegistry == NULL ) {
     mShouldClose = true;
@@ -194,20 +209,18 @@ void WaylandCore::pollEvents() {
     wl_display_cancel_read(mDisplay);
   }
 }
+
 bool WaylandCore::isShouldClose() {
   return mShouldClose;
 }
 
 void WaylandCore::redrawWindow()
 {
-  wl_surface* surface = mSurface;
-
-  on_redraw();
-
-  wl_callback* callback = wl_surface_frame( surface );
-  wl_surface_attach( surface, mImgBuf.buffer, 0, 0 );
-  wl_callback_add_listener( callback, &frame_listeners, this );
-  wl_surface_commit( surface ); 
+  bool changed=on_redraw();
+  setFrameCallback( mSurface, this);
+  if(changed)
+    wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );  
+  wl_surface_commit( mSurface ); 
 }
 
 void WaylandCore::setFullscreen(bool enable)
@@ -221,18 +234,10 @@ void WaylandCore::setFullscreen(bool enable)
   }
 }
 
-void WaylandCore::on_redraw(){
-  wl_surface* surface = mSurface;
-  int width =  mWidth;
-  int height = mHeight;
-  
-  uint32_t val = 0xFF0000FF;
-  for(int y=0;y<height;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mImgBuf.memory ) + width * y * sizeof(uint32_t);
-    for(int x=0;x<width;++x) {
-      reinterpret_cast<uint32_t*>(p)[x] = val;
-    }
-  }
+bool WaylandCore::on_redraw(){
+  fill_color(0xFF00FF00);
+  wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );
+  return true;
 }
 
 uint32_t calcColor()
@@ -263,7 +268,7 @@ uint32_t calcColor()
   return (r << 16) | (g << 8) | b;
 }
 
-void SampleWaylandCore::on_redraw(){
+bool SampleWaylandCore::on_redraw(){
   static int HEIGHT = mHeight;
   HEIGHT -= 5;
   if( HEIGHT < 0 ) { HEIGHT = mHeight; }
@@ -277,4 +282,5 @@ void SampleWaylandCore::on_redraw(){
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
   }
+  return true;
 }

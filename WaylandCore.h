@@ -24,10 +24,10 @@ public:
   int  getHeight() const  { return mHeight; }
   void setFullscreen(bool enable);
   void redrawWindow();
-  virtual void on_redraw();
+  virtual bool on_redraw();
 
 private:
-  void createWindow( int width, int height, const char* title, bool fullscreen );  
+  void createWindow( int width, int height, const char* title, bool fullscreen, int32_t fill_color);  
   void setup_registry_handlers();
   
 public:
@@ -54,5 +54,5 @@ private:
 };
 class SampleWaylandCore :public WaylandCore{
   using WaylandCore::WaylandCore;
-  void on_redraw() override;
+  bool on_redraw() override;
 };
