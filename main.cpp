@@ -56,20 +56,28 @@ static vector<string> split(const string &s, char delim) {
 
 static int handle_cmd(string cmd){
   vector<string> args=split(cmd,' ');
+  int argc =args.size();
 
   if (args[0]=="exit")
     return 1;
   else if (args[0]=="help")
     cout << "Here is help" << endl;
-  else if (args[0]=="show")
+  else if(args[0]=="show" && argc==2 && args[1]=="basic")
+    init_window(true);
+  else if (args[0]=="show"){
     init_window(false);
   else if (args[0]=="top")
     mCore->setFullscreen(false);
   else if (args[0]=="full")
     mCore->setFullscreen(true);
   else if (args[0]=="fill"){
-    int32_t col=stoi(args[1]);
-    mCore->setFillColor(col);
+    try{
+      int32_t col=stoi(args[1]);
+      mCore->setFillColor(col);
+    }
+    catch(invalid_argument ex){
+      cout << args[1]  << " is not a number" << endl;
+    }
   }
   else if (cmd=="exception")
     throw "test exception";
