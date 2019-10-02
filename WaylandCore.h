@@ -53,5 +53,6 @@ private:
 
 };
 class SampleWaylandCore :WaylandCore{
+  using WaylandCore::WaylandCore;
   void on_redraw() override;
 };
