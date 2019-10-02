@@ -24,10 +24,10 @@ private:
   wl_shell_surface* mShellSurface;
 
 public:
-  bool isShouldClose() { return mShouldClose; }
+  bool isShouldClose() const { return mShouldClose; }
   int  getWidth() const   { return mWidth; }
   int  getHeight() const  { return mHeight; }
-  void setFillColor(int32_t col) const  { mFillColor=col; }
+  void setFillColor(int32_t col) { mFillColor=col; }
 
 protected:
   int  mWidth, mHeight;
