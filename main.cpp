@@ -45,9 +45,9 @@ static int handle_cmd(string cmd){
   else if (cmd=="show basic")
     init_window(true);
   else if (cmd=="top")
-    mCore.setFullscreen(false);
+    mCore->setFullscreen(false);
   else if (cmd=="full")
-    mCore.setFullscreen(true);
+    mCore->setFullscreen(true);
   else if (cmd=="exception")
     throw "test exception";
   else
