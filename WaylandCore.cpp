@@ -43,12 +43,12 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
   mShouldClose(false),mWidth(0),mHeight(0)
 {
   mDisplay = wl_display_connect(NULL);
-  setup_registry_handlers();
+  setup_registry_handlers();//wait till registory is available
   
   if( mDisplay ) {
     mRegistry = wl_display_get_registry( mDisplay );
   }
-  createWindow( width, height, title );
+  createWindow( width, height, title, false);
 }
 
 WaylandCore::~WaylandCore(){
@@ -101,7 +101,10 @@ static wl_callback_listener frame_listeners = {
   frame_redraw,
 };
 
-static wl_buffer* createBuffer(wl_shm* shm,int size){
+static struct ImgBuf createBuffer(wl_shm* shm,int width, int height){
+  int stride = width * sizeof(uint32_t);
+  int size = stride * height;
+
   int fd = create_shared_fd( size );
   if( fd < 0 ) {
     return NULL;
@@ -111,7 +114,12 @@ static wl_buffer* createBuffer(wl_shm* shm,int size){
   memset( image_ptr, 0x00, size );
   wl_buffer* wb = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
   wl_shm_pool_destroy( pool ); pool = NULL;
-  return wb;
+
+  struct ImgBuf imgbuf;
+  imgbuf.buffer = wb;
+  imgbuf.memory  = image_ptr;
+
+  return imgbuf;
 }
 
 static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,void * data){
@@ -126,7 +134,7 @@ static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,
   return shellSurface;
 }
 
-void WaylandCore::createWindow( int width, int height, const char* title )
+void WaylandCore::createWindow( int width, int height, const char* title, bool fullscreen)
 {
   if( mDisplay == NULL || mCompositor == NULL ) {
     return;
@@ -134,25 +142,18 @@ void WaylandCore::createWindow( int width, int height, const char* title )
   mWidth = width;
   mHeight = height;
 
-  wl_surface* surface = wl_compositor_create_surface( mCompositor );
+  mSurface = wl_compositor_create_surface( mCompositor );
+  mShellSurface = wl_shell_get_shell_surface(title, mShell, mSurface, this);
+  this->setFullscreen(fullscreen);
 
-  mShellSurface = wl_shell_get_shell_surface(title, mShell, surface,this);
-  this->setFullscreen(true);
+  mImgbuf = createBuffer(mShm,mWidth,mHeight);
 
-  int stride = width * sizeof(uint32_t);
-  int size = stride * height;
-  wl_buffer* wb = createBuffer(mShm,size);
-
-  wl_callback* callback = wl_surface_frame( surface );
+  wl_callback* callback = wl_surface_frame( mSurface );
   wl_callback_add_listener( callback, &frame_listeners, this );
-  wl_surface_attach( surface, wb, 0, 0 );
-  
-  mSurface.surface = surface;
-  mSurface.buffer = wb;
-  mSurface.memory  = image_ptr;
+  wl_surface_attach( mSurface, mImgbuf.wb, 0, 0 );  
 
-  wl_surface_damage( surface, 0, 0, mWidth, mHeight );  
-  wl_surface_commit( surface );
+  wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
+  wl_surface_commit( mSurface );
 }
 
 void WaylandCore::waitEvents() {
@@ -195,12 +196,12 @@ bool WaylandCore::isShouldClose() {
 
 void WaylandCore::redrawWindow()
 {
-  wl_surface* surface = mSurface.surface;
+  wl_surface* surface = mSurface;
 
   on_redraw();
 
   wl_callback* callback = wl_surface_frame( surface );
-  wl_surface_attach( surface, mSurface.buffer, 0, 0 );
+  wl_surface_attach( surface, mImgbuf.buffer, 0, 0 );
   wl_callback_add_listener( callback, &frame_listeners, this );
   wl_surface_commit( surface ); 
 }
@@ -217,13 +218,13 @@ void WaylandCore::setFullscreen(bool enable)
 }
 
 void WaylandCore::on_redraw(){
-  wl_surface* surface = mSurface.surface;
+  wl_surface* surface = mSurface;
   int width =  mWidth;
   int height = mHeight;
   
   uint32_t val = 0xFF0000FF;
   for(int y=0;y<height;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mSurface.memory ) + width * y * sizeof(uint32_t);
+    uint8_t* p = static_cast<uint8_t*>( mImgbuf.memory ) + width * y * sizeof(uint32_t);
     for(int x=0;x<width;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
@@ -259,7 +260,7 @@ uint32_t calcColor()
 }
 
 void SampleWaylandCore::on_redraw(){
-  wl_surface* surface = mSurface.surface;
+  wl_surface* surface = mSurface;
   int width =  mWidth;
   int height = mHeight;
   static int HEIGHT = height;
@@ -271,7 +272,7 @@ void SampleWaylandCore::on_redraw(){
   uint32_t val = calcColor();
   val |= 0xFF000000;
   for(int y=0;y<height;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mSurface.memory ) + width * y * sizeof(uint32_t);
+    uint8_t* p = static_cast<uint8_t*>( mImgbuf.memory ) + width * y * sizeof(uint32_t);
     for(int x=0;x<width;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }

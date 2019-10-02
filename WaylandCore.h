@@ -22,7 +22,7 @@ public:
   virtual void on_redraw();
 
 private:
-  void createWindow( int width, int height, const char* title );  
+  void createWindow( int width, int height, const char* title, bool fullscreen );  
   void setup_registry_handlers();
   
 public:
@@ -33,11 +33,10 @@ protected:
   int  mWidth, mHeight;
   bool mShouldClose;
 
-  struct Surface {
-    wl_surface* surface;
+  struct ImgBuf {
     wl_buffer*  buffer;
     void*       memory;
-  } mSurface;
+  } mImgBuf;
 
 private:
   wl_display* mDisplay;
@@ -47,6 +46,7 @@ private:
   wl_shell*   mShell;
   wl_shm* mShm;
   
+  wl_surface* mSurface;
   wl_shell_surface* mShellSurface;
 
 };
