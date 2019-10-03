@@ -175,7 +175,7 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
 
 //  int fd = create_shared_fd( size ,filepath);
   filepath="";
-  int fd = create_shared_fd_auto( size ,filepath);
+  int fd = create_shared_fd_auto( size);
 
   if( fd < 0 ) {
     throw "cannot create ImgBuf: fail to create shared fd";
