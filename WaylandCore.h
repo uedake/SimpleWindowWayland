@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <wayland-client.h>
+#include <string.h>
 
 using namespace std;
 
