@@ -148,8 +148,8 @@ static void fill_buf(uint32_t val,void* mem,int width,int height){
 
 void WaylandCore::setFillColor(int32_t col) {
   mFillColor=col;
-  fill_buf(mFillColor,mImgBuf.memory,mWidth, mHeight);
-  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );
+  fill_buf(mFillColor,mImgBuf->memory,mWidth, mHeight);
+  wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
   wl_surface_commit( mSurface );
 }
@@ -251,7 +251,7 @@ static void setFrameCallback(wl_surface* surface,void * data){
 void WaylandRedrawable::startRedraw(){
   mRedraw=true;
   setFrameCallback(mSurface,this);
-  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );
+  wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );
   wl_surface_commit( mSurface ); 
 }
 
@@ -265,13 +265,13 @@ void WaylandRedrawable::redrawWindow()
   if(mRedraw){ //set next frame callback
     startRedraw();
     if(changed)
-      wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );  
+      wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );  
     wl_surface_commit( mSurface ); 
   }
 }
 
 bool WaylandRedrawable::on_redraw(){
-  fill_buf(mFillColor,mImgBuf.memory,mWidth, mHeight);
+  fill_buf(mFillColor,mImgBuf->memory,mWidth, mHeight);
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );
   return true;
 }
@@ -315,7 +315,7 @@ bool SampleWaylandRedrawable::on_redraw(){
   uint32_t val = calcColor();
   val |= 0xFF000000;
   for(int y=0;y<mHeight;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mImgBuf.memory ) + mWidth * y * sizeof(uint32_t);
+    uint8_t* p = static_cast<uint8_t*>( mImgBuf->memory ) + mWidth * y * sizeof(uint32_t);
     for(int x=0;x<mWidth;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }

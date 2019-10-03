@@ -17,7 +17,7 @@ class WaylandCore {
 
 protected:
   wl_surface* mSurface;
-  struct ImgBuf mImgBuf;
+  ImgBuf* mImgBuf;
   bool debug_print=true;
 
 private:
