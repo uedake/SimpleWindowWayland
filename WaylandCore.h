@@ -9,6 +9,9 @@ struct ImgBuf {
   wl_buffer*  buffer;
   void*       memory;
   int         size;
+  int         width;
+  int         height;
+
   ImgBuf(wl_shm* shm,int width, int height);
   ~ImgBuf();
 };
@@ -29,14 +32,11 @@ class WaylandCore {
     wl_shell_surface* mShellSurface;
 
   protected:
-    int  mWidth, mHeight;
     bool mShouldClose;
     int32_t mFillColor;
 
   public:
     bool isShouldClose() const { return mShouldClose; }
-    int  getWidth() const   { return mWidth; }
-    int  getHeight() const  { return mHeight; }
 
   public:
     WaylandCore( int width, int height, const char* title );

@@ -12,7 +12,7 @@
 
 WaylandCore::WaylandCore( int width, int height, const char* title )
 : mDisplay(NULL),mRegistry(NULL),mCompositor(NULL),mShm(NULL),
-  mShouldClose(false),mWidth(0),mHeight(0),mFillColor(0xFF0000FF)
+  mShouldClose(false),mFillColor(0xFF0000FF)
 {
   mDisplay = wl_display_connect(NULL);
   setup_registry_handlers();//wait till registory is available
@@ -108,7 +108,9 @@ static int create_shared_fd( int size ) {
   return fd;
 }
 
-ImgBuf::ImgBuf(wl_shm* shm,int width, int height){
+ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
+  width=w;
+  height=h;
   int stride = width * sizeof(uint32_t);
   size = stride * height;
 
@@ -152,9 +154,9 @@ static void fill_buf(uint32_t val,void* mem,int width,int height){
 
 void WaylandCore::setFillColor(int32_t col) {
   mFillColor=col;
-  fill_buf(mFillColor,mImgBuf->memory,mWidth, mHeight);
+  fill_buf(mFillColor,mImgBuf->memory,mImgBuf->width,mImgBuf->height);
   wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );
-  wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
+  wl_surface_damage( mSurface, 0, 0, mImgBuf->width, mImgBuf->height );  
   wl_surface_commit( mSurface );
 }
 
@@ -163,15 +165,13 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
   if( mDisplay == NULL || mCompositor == NULL ) {
     throw "createWindow: unexpected error";
   }
-  mWidth = width;
-  mHeight = height;
 
   mSurface = wl_compositor_create_surface( mCompositor );
   mShellSurface = createShellSurface(title, mShell, mSurface, this);
   this->setFullscreen(fullscreen);
 
   try{
-    mImgBuf = new ImgBuf(mShm,mWidth,mHeight);
+    mImgBuf = new ImgBuf(mShm,width,height);
   }
   catch(...){
     throw "createWindow: failed to create buffer";
@@ -275,8 +275,8 @@ void WaylandRedrawable::redrawWindow()
 }
 
 bool WaylandRedrawable::on_redraw(){
-  fill_buf(mFillColor,mImgBuf->memory,mWidth, mHeight);
-  wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );
+  fill_buf(mFillColor,mImgBuf->memory,mImgBuf->width, mImgBuf->height);
+  wl_surface_damage( mSurface, 0, 0, mImgBuf->width, mImgBuf->height );
   return true;
 }
 
@@ -311,16 +311,16 @@ uint32_t calcColor()
 }
 
 bool SampleWaylandRedrawable::on_redraw(){
-  static int HEIGHT = mHeight;
+  static int HEIGHT = mImgBuf->height;
   HEIGHT -= 5;
-  if( HEIGHT < 0 ) { HEIGHT = mHeight; }
-  wl_surface_damage( mSurface, 0, 0, mWidth, HEIGHT );
+  if( HEIGHT < 0 ) { HEIGHT = mImgBuf->height; }
+  wl_surface_damage( mSurface, 0, 0, mImgBuf->width, HEIGHT );
   
   uint32_t val = calcColor();
   val |= 0xFF000000;
   for(int y=0;y<mHeight;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mImgBuf->memory ) + mWidth * y * sizeof(uint32_t);
-    for(int x=0;x<mWidth;++x) {
+    uint8_t* p = static_cast<uint8_t*>( mImgBuf->memory ) + mImgBuf->width * y * sizeof(uint32_t);
+    for(int x=0;x<mImgBuf->width;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
     }
   }
