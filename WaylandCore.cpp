@@ -68,9 +68,6 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
 }
 
 WaylandCore::~WaylandCore(){
-  if( filepath !="") {
-    unlink(filepath.c_str()); //make other process cannot find filename to access the imgbuf
-  }
   if( mShm ) {
     wl_shm_destroy( mShm );
     mShm = NULL;
@@ -185,8 +182,10 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
 }
 
 ImgBuf::~ImgBuf(){
+  unlink(filepath.c_str()); //make other process cannot find filename to access the imgbuf
   wl_buffer_destroy(buffer);
   munmap(memory, size);
+  cout << "ImgBuf destroyed: file path is " << filepath << endl;
 }
 
 void ImgBuf::fill(uint32_t val){
