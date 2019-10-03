@@ -155,7 +155,7 @@ static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,
 
 void WaylandCore::setFillColor(int32_t col) {
   mFillColor=col;
-  fill_buf(mFillColor,mImgBuf->memory,mImgBuf->width,mImgBuf->height);
+  mImgBuf->fill(mFillColor);
   wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );
   wl_surface_damage( mSurface, 0, 0, mImgBuf->width, mImgBuf->height );  
   wl_surface_commit( mSurface );
@@ -276,7 +276,7 @@ void WaylandRedrawable::redrawWindow()
 }
 
 bool WaylandRedrawable::on_redraw(){
-  fill_buf(mFillColor,mImgBuf->memory,mImgBuf->width, mImgBuf->height);
+  mImgBuf->fill(mFillColor);
   wl_surface_damage( mSurface, 0, 0, mImgBuf->width, mImgBuf->height );
   return true;
 }
