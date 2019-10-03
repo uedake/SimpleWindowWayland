@@ -98,17 +98,18 @@ WaylandCore::~WaylandCore(){
 
 void WaylandCore::on_resize(int width,int height){
   if(debug_print)
-    cout << "Resized: w="<< width << ",h="<<height<< endl;
+    cout << "Resize requested: w="<< width << ",h="<<height<< endl;
 
-  if(mImgBuf && mImgBuf->width==width && mImgBuf->height==height){
+  if(mImgBuf && mImgBuf->width==width && mImgBuf->height==height)
     return;
-  }
 
   try{
     if(mImgBuf){
       delete mImgBuf;
       mImgBuf = NULL;
     }
+    if(debug_print)
+      cout << "start creating buffer: w="<< width << ",h="<<height<< endl;
     mImgBuf = new ImgBuf(mShm,width,height);
   }
   catch(...){
@@ -116,7 +117,28 @@ void WaylandCore::on_resize(int width,int height){
   }
 }
 
-static int create_shared_fd( int size ) {
+static int create_shared_fd( int size, string filename, bool keep_filename_visible=true) {
+  const char* dir = NULL;
+  int fd = -1;
+  dir = getenv("XDG_RUNTIME_DIR");
+  if( !dir ) {
+    return -1;
+  }
+  string path = dir + "/" + filename;
+  
+  fd = mkostemp( path.c_str(), O_CLOEXEC );
+  if( fd >= 0 && !keep_filename_visible) {
+    unlink(path.c_str()); //make other process cannot find filename to access the imgbuf
+  }
+  if( ftruncate( fd, size ) < 0 ) {
+    close(fd);
+    return -1;
+  }
+  return fd;
+}
+
+
+static int create_shared_fd_auto( int size, bool keep_filename_visible=true) {
   static const char fmt[] = "/weston-shared-XXXXXX";
   const char* path = NULL;
   char* name = NULL;
@@ -133,8 +155,8 @@ static int create_shared_fd( int size ) {
   strcat( name, fmt );
   
   fd = mkostemp( name, O_CLOEXEC );
-  if( fd >= 0 ) {
-    unlink(name);
+  if( fd >= 0 && !keep_filename_visible) {
+    unlink(name); //make other process cannot find filename to access the imgbuf
   }
   free(name); name = NULL;
   if( ftruncate( fd, size ) < 0 ) {
@@ -150,7 +172,8 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
   int stride = width * sizeof(uint32_t);
   size = stride * height;
 
-  int fd = create_shared_fd( size );
+  string name = "ImgBuf_" + w + "_" +h;
+  int fd = create_shared_fd( size ,name);
   if( fd < 0 ) {
     throw "cannot create ImgBuf: fail to create shared fd";
   }
