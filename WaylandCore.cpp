@@ -68,6 +68,9 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
 }
 
 WaylandCore::~WaylandCore(){
+  if(debug_print)
+    cout << "WaylandCore start destroying" << endl;
+
   if( mShm ) {
     wl_shm_destroy( mShm );
     mShm = NULL;
@@ -85,6 +88,9 @@ WaylandCore::~WaylandCore(){
     wl_display_disconnect( mDisplay );
     mDisplay = NULL;
   }
+  if(debug_print)
+    cout << "WaylandCore try to delete mImgBuf" << endl;
+
   if( mImgBuf ) {
     delete mImgBuf;
     mImgBuf = NULL;
