@@ -20,6 +20,7 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
     mRegistry = wl_display_get_registry( mDisplay );
   }
   createWindow( width, height, title, false);
+  setFillColor( mFillColor);
 }
 
 WaylandCore::~WaylandCore(){
@@ -133,6 +134,14 @@ static void fill_buf(uint32_t val,void* mem,int width,int height){
   }
 }
 
+void WaylandCore::setFillColor(int32_t col) {
+  mFillColor=col;
+  fill_buf(mFillColor,mImgBuf.memory,mWidth, mHeight);
+  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );
+  wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
+  wl_surface_commit( mSurface );
+}
+
 void WaylandCore::createWindow( int width, int height, const char* title, bool fullscreen)
 {
   if( mDisplay == NULL || mCompositor == NULL ) {
@@ -149,10 +158,6 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
   if(!mImgBuf.ready){
     throw "createWindow: failed to create buffer";
   }
-  fill_buf(mFillColor,mImgBuf.memory,mWidth, mHeight);
-  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );
-  wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );  
-  wl_surface_commit( mSurface );
 }
 
 void WaylandCore::waitEvents() {
@@ -202,11 +207,12 @@ void WaylandCore::setFullscreen(bool enable)
   }
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+
 WaylandRedrawable::WaylandRedrawable( int width, int height, const char* title )
   : WaylandCore(width,height,title){
   startRedraw();  
 }
-
 
 static void frame_redraw( void* data, wl_callback* callback, uint32_t time )
 {
@@ -229,6 +235,8 @@ static void setFrameCallback(wl_surface* surface,void * data){
 void WaylandRedrawable::startRedraw(){
   mRedraw=true;
   setFrameCallback(mSurface,this);
+  wl_surface_attach( mSurface, mImgBuf.buffer, 0, 0 );
+  wl_surface_commit( mSurface ); 
 }
 
 void WaylandRedrawable::stopRedraw(){
@@ -251,6 +259,8 @@ bool WaylandRedrawable::on_redraw(){
   wl_surface_damage( mSurface, 0, 0, mWidth, mHeight );
   return true;
 }
+
+//////////////////////////////////////////////////////////////////////////////////
 
 uint32_t calcColor()
 {
