@@ -124,7 +124,7 @@ static int create_shared_fd( int size, string filename, bool keep_filename_visib
   if( !dir ) {
     return -1;
   }
-  string path = to_string(dir) + "/" + filename;
+  string path = dir + "/"s + filename;
   
   fd = fopen( path.c_str(), O_RDWR | O_CREAT);
   if( fd >= 0 && !keep_filename_visible) {
