@@ -118,13 +118,13 @@ void WaylandCore::on_resize(int width,int height){
 }
 
 static int create_shared_fd( int size, string filename, bool keep_filename_visible=true) {
-  const char* dir = NULL;
+  char* dir = NULL;
   int fd = -1;
   dir = getenv("XDG_RUNTIME_DIR");
   if( !dir ) {
     return -1;
   }
-  string path = to_string(dir) + "/" + filename;
+  string path = dir + "/" + filename;
   
   fd = fopen( path.c_str(), O_RDWR | O_CREAT);
   if( fd >= 0 && !keep_filename_visible) {
