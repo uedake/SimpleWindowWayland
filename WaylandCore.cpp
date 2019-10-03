@@ -190,10 +190,14 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
 ImgBuf::~ImgBuf(){
   cout << "ImgBuf try to unlink " << filepath << endl;
   unlink(filepath.c_str()); //make other process cannot find filename to access the imgbuf
+
   cout << "ImgBuf try to destroy buffer" << endl;
-  wl_buffer_destroy(buffer);
+  if(buffer)
+    wl_buffer_destroy(buffer);
+
   cout << "ImgBuf try to unmap memory" << endl;
   munmap(memory, size);
+
   cout << "ImgBuf destroyed: file path is " << filepath << endl;
 }
 
