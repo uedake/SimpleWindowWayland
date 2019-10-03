@@ -62,7 +62,6 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
   mShellSurface = createShellSurface(title, mShell, mSurface, this);
   setFullscreen(false);
   on_resize(width,height);
-  setFillColor( mFillColor);
   if(debug_print)
     cout << "WaylandCore created" << endl;
 }
@@ -115,6 +114,7 @@ void WaylandCore::on_resize(int width,int height){
     if(debug_print)
       cout << "start creating buffer: w="<< width << ",h="<<height<< endl;
     mImgBuf = new ImgBuf(mShm,width,height);
+    setFillColor( mFillColor);
   }
   catch(...){
     throw "WaylandCore: failed to create buffer";
