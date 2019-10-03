@@ -172,7 +172,8 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
   int stride = width * sizeof(uint32_t);
   size = stride * height;
 
-  string name = "ImgBuf_" + w + "_" +h;
+  string name = "ImgBuf_";
+  name = name + w + "_" +h;
   int fd = create_shared_fd( size ,name);
   if( fd < 0 ) {
     throw "cannot create ImgBuf: fail to create shared fd";
