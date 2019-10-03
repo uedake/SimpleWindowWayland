@@ -126,7 +126,7 @@ static int create_shared_fd( int size, string filename, bool keep_filename_visib
   }
   string path = dir + "/"s + filename;
   
-  fd = fopen( path.c_str(), O_RDWR | O_CREAT);
+  fd = open( path.c_str(), O_RDWR | O_CREAT);
   if( fd >= 0 && !keep_filename_visible) {
     unlink(path.c_str()); //make other process cannot find filename to access the imgbuf
   }
