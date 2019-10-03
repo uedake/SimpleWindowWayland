@@ -67,6 +67,11 @@ static void shell_surface_handler_configure(
   int32_t width, 
   int32_t height )
 {
+  WaylandCore* wl = static_cast<WaylandCore*>(data);
+  wl->on_resize(width,height);
+}
+
+void WaylandCore::on_resize(int width,int height){
   if(debug_print)
     cout << "Resized: w="<< width << ",h="<<height<< endl;
 }
@@ -117,7 +122,6 @@ ImgBuf::ImgBuf(wl_shm* shm,int width, int height){
   memset( memory, 0x00, size );
   buffer = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
   wl_shm_pool_destroy( pool ); pool = NULL;
-  ready = true;  
 }
 
 ImgBuf::~ImgBuf(){
