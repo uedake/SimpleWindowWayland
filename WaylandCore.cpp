@@ -206,8 +206,8 @@ WaylandRedrawable::WaylandRedrawable( int width, int height, const char* title )
   : WaylandCore(width,height,title){
   startRedraw();  
 }
-WaylandRedrawable::~WaylandRedrawable( int width, int height, const char* title )
-  : ~WaylandCore(width,height,title){
+WaylandRedrawable::~WaylandRedrawable()
+  : ~WaylandCore(){
 }
 
 
