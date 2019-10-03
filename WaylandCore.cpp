@@ -173,9 +173,7 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
     throw "cannot create ImgBuf: XDG_RUNTIME_DIR is not set";
   filepath = dir + "/"s + filename;
 
-//  int fd = create_shared_fd( size ,filepath);
-  filepath="";
-  int fd = create_shared_fd_auto( size);
+  int fd = create_shared_fd( size ,filepath);
 
   if( fd < 0 ) {
     throw "cannot create ImgBuf: fail to create shared fd";
@@ -194,9 +192,11 @@ ImgBuf::~ImgBuf(){
   cout << "ImgBuf try to unlink " << filepath << endl;
   unlink(filepath.c_str()); //make other process cannot find filename to access the imgbuf
 
+  /*
   cout << "ImgBuf try to destroy buffer" << endl;
   if(buffer)
     wl_buffer_destroy(buffer);
+  */
 
   cout << "ImgBuf try to unmap memory" << endl;
   munmap(memory, size);
