@@ -10,6 +10,28 @@
 
 #include "WaylandCore.h"
 
+static void shell_surface_handler_ping(
+  void *data, 
+  struct wl_shell_surface *shell_surface,
+  uint32_t serial )
+{
+	wl_shell_surface_pong( shell_surface, serial );
+}
+static void shell_surface_handler_configure(
+  void *data, 
+  struct wl_shell_surface *shell_surface,
+  uint32_t edges, 
+  int32_t width, 
+  int32_t height )
+{
+  WaylandCore* wl = static_cast<WaylandCore*>(data);
+  wl->on_resize(width,height);
+}
+
+static void shell_surface_handler_popup_done( void *data, struct wl_shell_surface *shell_surface )
+{
+}
+
 static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,void * data){
   wl_shell_surface* shellSurface = wl_shell_get_shell_surface( shell, surface );
   wl_shell_surface_set_title( shellSurface, title );
@@ -73,23 +95,6 @@ WaylandCore::~WaylandCore(){
     cout << "WaylandCore destructed" << endl;
 }
 
-static void shell_surface_handler_ping(
-  void *data, 
-  struct wl_shell_surface *shell_surface,
-  uint32_t serial )
-{
-	wl_shell_surface_pong( shell_surface, serial );
-}
-static void shell_surface_handler_configure(
-  void *data, 
-  struct wl_shell_surface *shell_surface,
-  uint32_t edges, 
-  int32_t width, 
-  int32_t height )
-{
-  WaylandCore* wl = static_cast<WaylandCore*>(data);
-  wl->on_resize(width,height);
-}
 
 void WaylandCore::on_resize(int width,int height){
   if(debug_print)
@@ -101,10 +106,6 @@ void WaylandCore::on_resize(int width,int height){
   catch(...){
     throw "WaylandCore: failed to create buffer";
   }
-}
-
-static void shell_surface_handler_popup_done( void *data, struct wl_shell_surface *shell_surface )
-{
 }
 
 static int create_shared_fd( int size ) {

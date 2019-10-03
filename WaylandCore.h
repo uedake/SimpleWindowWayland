@@ -54,7 +54,6 @@ class WaylandCore {
     virtual void on_resize(int width,int height);
 
   private:
-    void createWindow( int width, int height, const char* title, bool fullscreen);  
     void setup_registry_handlers();    
 };
 
