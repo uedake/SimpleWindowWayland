@@ -21,6 +21,7 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
   }
   createWindow( width, height, title, false);
   setFillColor( mFillColor);
+  cout << "WaylandCore created";
 }
 
 WaylandCore::~WaylandCore(){
@@ -41,6 +42,7 @@ WaylandCore::~WaylandCore(){
     wl_display_disconnect( mDisplay );
     mDisplay = NULL;
   }
+  cout << "WaylandCore destructed";
 }
 
 static void shell_surface_handler_ping(
@@ -211,7 +213,8 @@ void WaylandCore::setFullscreen(bool enable)
 
 WaylandRedrawable::WaylandRedrawable( int width, int height, const char* title )
   : WaylandCore(width,height,title){
-  startRedraw();  
+  startRedraw();
+  cout << "WaylandRedrawable created";
 }
 
 static void frame_redraw( void* data, wl_callback* callback, uint32_t time )
