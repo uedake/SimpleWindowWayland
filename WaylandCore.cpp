@@ -180,7 +180,7 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
   buffer = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
   wl_shm_pool_destroy( pool ); pool = NULL;
 
-  cout << "ImgBuf created: file path is " filepath << endl;
+  cout << "ImgBuf created: file path is " << filepath << endl;
 }
 
 ImgBuf::~ImgBuf(){
