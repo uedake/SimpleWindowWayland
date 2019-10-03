@@ -14,6 +14,7 @@ struct ImgBuf {
 
   ImgBuf(wl_shm* shm,int width, int height);
   ~ImgBuf();
+  void fill(uint32_t val);
 };
 
 class WaylandCore {

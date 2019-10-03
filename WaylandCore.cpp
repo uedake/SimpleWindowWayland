@@ -131,6 +131,16 @@ ImgBuf::~ImgBuf(){
   munmap(memory, size);
 }
 
+void ImgBuf::fill(uint32_t val){
+  for(int y=0;y<height;++y) {
+    uint8_t* p = static_cast<uint8_t*>( memory ) + width * y * sizeof(uint32_t);
+    for(int x=0;x<width;++x) {
+      reinterpret_cast<uint32_t*>(p)[x] = val;
+    }
+  }
+}
+
+
 static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,void * data){
   wl_shell_surface* shellSurface = wl_shell_get_shell_surface( shell, surface );
   wl_shell_surface_set_title( shellSurface, title );
@@ -141,15 +151,6 @@ static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,
   };  
   wl_shell_surface_add_listener( shellSurface, &shell_surf_listeners, data );
   return shellSurface;
-}
-
-static void fill_buf(uint32_t val,void* mem,int width,int height){
-  for(int y=0;y<height;++y) {
-    uint8_t* p = static_cast<uint8_t*>( mem ) + width * y * sizeof(uint32_t);
-    for(int x=0;x<width;++x) {
-      reinterpret_cast<uint32_t*>(p)[x] = val;
-    }
-  }
 }
 
 void WaylandCore::setFillColor(int32_t col) {
@@ -318,7 +319,7 @@ bool SampleWaylandRedrawable::on_redraw(){
   
   uint32_t val = calcColor();
   val |= 0xFF000000;
-  for(int y=0;y<mHeight;++y) {
+  for(int y=0;y<mImgBuf->height;++y) {
     uint8_t* p = static_cast<uint8_t*>( mImgBuf->memory ) + mImgBuf->width * y * sizeof(uint32_t);
     for(int x=0;x<mImgBuf->width;++x) {
       reinterpret_cast<uint32_t*>(p)[x] = val;
