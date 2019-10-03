@@ -16,6 +16,7 @@ class WaylandCore {
 protected:
   wl_surface* mSurface;
   struct ImgBuf mImgBuf;
+  bool debug_print=true;
 
 private:
   wl_display* mDisplay;
@@ -39,7 +40,7 @@ protected:
 public:
   WaylandCore( int width, int height, const char* title );
   WaylandCore();
-  ~WaylandCore();
+  virtual ~WaylandCore();
   
   void waitEvents();
   void pollEvents();  

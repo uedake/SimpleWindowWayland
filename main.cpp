@@ -25,13 +25,19 @@ static int WIDTH=640;
 static int HEIGHT=480;
 static const char* TITLE="DocomoTest";
 
-static void init_window(bool basic){
+#define WL_CORE 0
+#define WL_REDRAW 1
+#define WL_REDRAW_SAMPLE 2
+
+static void init_window(int type){
   if(mCore!=nullptr)
     delete mCore;mCore = nullptr;
   
-  if(basic)
+  if(type==WL_CORE)
     mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
-  else
+  else if(type==WL_REDRAW)
+    mCore = new WaylandRedrawable(WIDTH, HEIGHT, TITLE);
+  else if(type==WL_REDRAW_SAMPLE)
     mCore = new SampleWaylandRedrawable(WIDTH, HEIGHT, TITLE);
 }
 
@@ -61,10 +67,12 @@ static int handle_cmd(string cmd){
     return 1;
   else if (args[0]=="help")
     cout << "Here is help" << endl;
-  else if(args[0]=="show" && argc==2 && args[1]=="basic")
-    init_window(true);
+  else if(args[0]=="show" && argc==2 && args[1]=="core")
+    init_window(WL_CORE);
+  else if(args[0]=="show" && argc==2 && args[1]=="redraw")
+    init_window(WL_REDRAW);
   else if (args[0]=="show")
-    init_window(false);
+    init_window(WL_REDRAW_SAMPLE);
   else if (args[0]=="top")
     mCore->setFullscreen(false);
   else if (args[0]=="full")
