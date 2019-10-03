@@ -20,7 +20,15 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
   if( mDisplay ) {
     mRegistry = wl_display_get_registry( mDisplay );
   }
-  createWindow( width, height, title, false);
+
+  if( mDisplay == NULL || mCompositor == NULL ) {
+    throw "WaylandCore: unexpected error";
+  }
+
+  mSurface = wl_compositor_create_surface( mCompositor );
+  mShellSurface = createShellSurface(title, mShell, mSurface, this);
+  setFullscreen(false);
+  on_resize(width,height);
   setFillColor( mFillColor);
   if(debug_print)
     cout << "WaylandCore created" << endl;
@@ -74,6 +82,13 @@ static void shell_surface_handler_configure(
 void WaylandCore::on_resize(int width,int height){
   if(debug_print)
     cout << "Resized: w="<< width << ",h="<<height<< endl;
+
+  try{
+    mImgBuf = new ImgBuf(mShm,width,height);
+  }
+  catch(...){
+    throw "WaylandCore: failed to create buffer";
+  }
 }
 
 static void shell_surface_handler_popup_done( void *data, struct wl_shell_surface *shell_surface )
@@ -161,23 +176,6 @@ void WaylandCore::setFillColor(int32_t col) {
   wl_surface_commit( mSurface );
 }
 
-void WaylandCore::createWindow( int width, int height, const char* title, bool fullscreen)
-{
-  if( mDisplay == NULL || mCompositor == NULL ) {
-    throw "createWindow: unexpected error";
-  }
-
-  mSurface = wl_compositor_create_surface( mCompositor );
-  mShellSurface = createShellSurface(title, mShell, mSurface, this);
-  this->setFullscreen(fullscreen);
-
-  try{
-    mImgBuf = new ImgBuf(mShm,width,height);
-  }
-  catch(...){
-    throw "createWindow: failed to create buffer";
-  }
-}
 
 void WaylandCore::waitEvents() {
   if( mDisplay == NULL || mRegistry == NULL ) {
