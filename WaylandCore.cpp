@@ -44,6 +44,11 @@ WaylandCore::~WaylandCore(){
     wl_display_disconnect( mDisplay );
     mDisplay = NULL;
   }
+  if( mImgBuf ) {
+    delete mImgBuf;
+    mImgBuf = NULL;
+  }
+
   if(debug_print)
     cout << "WaylandCore destructed" << endl;
 }
@@ -62,6 +67,8 @@ static void shell_surface_handler_configure(
   int32_t width, 
   int32_t height )
 {
+  if(debug_print)
+    cout << "Resized: w="<< width << ",h="<<height<< endl;
 }
 
 static void shell_surface_handler_popup_done( void *data, struct wl_shell_surface *shell_surface )
@@ -96,26 +103,26 @@ static int create_shared_fd( int size ) {
   return fd;
 }
 
-static struct ImgBuf createBuffer(wl_shm* shm,int width, int height){
-  struct ImgBuf imgbuf;
+ImgBuf::ImgBuf(wl_shm* shm,int width, int height){
   int stride = width * sizeof(uint32_t);
-  int size = stride * height;
+  size = stride * height;
 
   int fd = create_shared_fd( size );
   if( fd < 0 ) {
-    return imgbuf;
+    throw "cannot create ImgBuf: fail to create shared fd";
   }
-  void* image_ptr = mmap( NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
-  wl_shm_pool* pool = wl_shm_create_pool( shm, fd, size );
-  memset( image_ptr, 0x00, size );
-  wl_buffer* wb = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
-  wl_shm_pool_destroy( pool ); pool = NULL;
 
-  imgbuf.buffer = wb;
-  imgbuf.memory  = image_ptr;
-  imgbuf.ready = true;
-  
-  return imgbuf;
+  memory = mmap( NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0 );
+  wl_shm_pool* pool = wl_shm_create_pool( shm, fd, size );
+  memset( memory, 0x00, size );
+  buffer = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
+  wl_shm_pool_destroy( pool ); pool = NULL;
+  ready = true;  
+}
+
+ImgBuf::~ImgBuf(){
+  wl_buffer_destroy(buffer);
+  munmap(memory, size);
 }
 
 static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,void * data){
@@ -159,8 +166,10 @@ void WaylandCore::createWindow( int width, int height, const char* title, bool f
   mShellSurface = createShellSurface(title, mShell, mSurface, this);
   this->setFullscreen(fullscreen);
 
-  mImgBuf = createBuffer(mShm,mWidth,mHeight);
-  if(!mImgBuf.ready){
+  try{
+    mImgBuf = new ImgBuf(mShm,mWidth,mHeight);
+  }
+  catch(...){
     throw "createWindow: failed to create buffer";
   }
 }

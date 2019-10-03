@@ -8,7 +8,9 @@ using namespace std;
 struct ImgBuf {
   wl_buffer*  buffer;
   void*       memory;
-  bool        ready;
+  int         size;
+  ImgBuf(wl_shm* shm,int width, int height);
+  ~ImgBuf();
 };
 
 class WaylandCore {
