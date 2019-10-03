@@ -56,8 +56,6 @@ private:
 class WaylandRedrawable :public WaylandCore{
   public:
     WaylandRedrawable( int width, int height, const char* title );
-    WaylandRedrawable();
-    ~WaylandRedrawable();
     void redrawWindow();
     void startRedraw();
     void stopRedraw();

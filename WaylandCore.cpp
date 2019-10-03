@@ -206,9 +206,6 @@ WaylandRedrawable::WaylandRedrawable( int width, int height, const char* title )
   : WaylandCore(width,height,title){
   startRedraw();  
 }
-WaylandRedrawable::~WaylandRedrawable()
-  : ~WaylandCore(){
-}
 
 
 static void frame_redraw( void* data, wl_callback* callback, uint32_t time )
