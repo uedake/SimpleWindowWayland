@@ -173,7 +173,10 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
     throw "cannot create ImgBuf: XDG_RUNTIME_DIR is not set";
   filepath = dir + "/"s + filename;
 
-  int fd = create_shared_fd( size ,filepath);
+//  int fd = create_shared_fd( size ,filepath);
+  filepath="";
+  int fd = create_shared_fd_auto( size ,filepath);
+
   if( fd < 0 ) {
     throw "cannot create ImgBuf: fail to create shared fd";
   }
