@@ -77,7 +77,17 @@ static int handle_cmd(string cmd){
     mCore->setFullscreen(false);
   else if (args[0]=="full")
     mCore->setFullscreen(true);
-  else if (args[0]=="fill"){
+  else if (args[0]=="resize" && argc==3){
+    try{
+      int32_t w=stoi(args[1],nullptr,0);
+      int32_t h=stoi(args[2],nullptr,0);
+      mCore->on_resize(w,h);
+    }
+    catch(invalid_argument ex){
+      cout << args[1] << " " << args[2]  << " is not a number" << endl;
+    }
+  }
+  else if (args[0]=="fill" && argc==2){
     try{
       int32_t col=stoi(args[1],nullptr,0);
       mCore->setFillColor(col);

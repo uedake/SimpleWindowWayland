@@ -100,7 +100,15 @@ void WaylandCore::on_resize(int width,int height){
   if(debug_print)
     cout << "Resized: w="<< width << ",h="<<height<< endl;
 
+  if(mImgBuf && mImgBuf->width==width && mImgBuf->height==height){
+    return;
+  }
+
   try{
+    if(mImgBuf){
+      delete mImgBuf;
+      mImgBuf = NULL;
+    }
     mImgBuf = new ImgBuf(mShm,width,height);
   }
   catch(...){
