@@ -54,8 +54,10 @@ private:
 };
 
 class WaylandRedrawable :public WaylandCore{
-  using WaylandCore::WaylandCore;
   public:
+    WaylandRedrawable( int width, int height, const char* title );
+    WaylandRedrawable();
+    ~WaylandRedrawable();
     void redrawWindow();
     void startRedraw();
     void stopRedraw();
@@ -63,7 +65,7 @@ class WaylandRedrawable :public WaylandCore{
     virtual bool on_redraw();
   private:
     bool mRedraw;
-}
+};
 
 class SampleWaylandRedrawable :public WaylandRedrawable{
   using WaylandRedrawable::WaylandRedrawable;
