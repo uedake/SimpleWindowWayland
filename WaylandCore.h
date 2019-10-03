@@ -44,20 +44,28 @@ public:
   void waitEvents();
   void pollEvents();  
   void setFullscreen(bool enable);
-  void redrawWindow();
 
   void registry_listener_global( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
   void registry_listener_global_remove( wl_registry* reg, uint32_t name );
-
-protected:
-  virtual bool on_redraw();
 
 private:
   void createWindow( int width, int height, const char* title, bool fullscreen);  
   void setup_registry_handlers();    
 };
 
-class SampleWaylandCore :public WaylandCore{
+class WaylandRedrawable :public WaylandCore{
   using WaylandCore::WaylandCore;
+  public:
+    void redrawWindow();
+    void startRedraw();
+    void stopRedraw();
+  protected:
+    virtual bool on_redraw();
+  private:
+    bool mRedraw;
+}
+
+class SampleWaylandRedrawable :public WaylandRedrawable{
+  using WaylandRedrawable::WaylandRedrawable;
   bool on_redraw() override;
 };

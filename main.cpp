@@ -17,23 +17,22 @@
 #define FIRST_PROMPT  ">>"
 #define AFTER_STDOUT_PROMPT  "--"
 
-#define WIDTH 640
-#define HEIGHT 480
-#define TITLE "DocomoTest"
-
 using namespace std;
 
 static int EVENT_LOOP_WAIT_USEC=10*1000;
 static WaylandCore* mCore=NULL;
+static int WIDTH=640;
+static int HEIGHT=480;
+static string TITLE="DocomoTest";
 
 static void init_window(bool basic){
-  if(mCore!=NULL)
-    delete mCore;mCore = NULL;
+  if(mCore!=nullptr)
+    delete mCore;mCore = nullptr;
   
   if(basic)
     mCore = new WaylandCore(WIDTH, HEIGHT, TITLE);
   else
-    mCore = new SampleWaylandCore(WIDTH, HEIGHT, TITLE);
+    mCore = new SampleWaylandRedrawable(WIDTH, HEIGHT, TITLE);
 }
 
 static vector<string> split(const string &s, char delim) {
