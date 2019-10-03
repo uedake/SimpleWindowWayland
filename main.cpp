@@ -77,6 +77,8 @@ static int handle_cmd(string cmd){
     mCore->setFullscreen(false);
   else if (args[0]=="full")
     mCore->setFullscreen(true);
+  else if (args[0]=="reflect")
+    mCore->refrectBuffer();
   else if (args[0]=="resize" && argc==3){
     try{
       int32_t w=stoi(args[1],nullptr,0);

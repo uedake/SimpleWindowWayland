@@ -212,14 +212,16 @@ void ImgBuf::fill(uint32_t val){
     }
   }
 }
-
+void WaylandCore::refrectBuffer(){
+  wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );
+  wl_surface_damage( mSurface, 0, 0, mImgBuf->width, mImgBuf->height );  
+  wl_surface_commit( mSurface );
+}
 
 void WaylandCore::setFillColor(int32_t col) {
   mFillColor=col;
   mImgBuf->fill(mFillColor);
-  wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );
-  wl_surface_damage( mSurface, 0, 0, mImgBuf->width, mImgBuf->height );  
-  wl_surface_commit( mSurface );
+  refrectBuffer();
 }
 
 
