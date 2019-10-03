@@ -10,6 +10,18 @@
 
 #include "WaylandCore.h"
 
+static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,void * data){
+  wl_shell_surface* shellSurface = wl_shell_get_shell_surface( shell, surface );
+  wl_shell_surface_set_title( shellSurface, title );
+  static wl_shell_surface_listener shell_surf_listeners = {
+    shell_surface_handler_ping,
+    shell_surface_handler_configure,
+    shell_surface_handler_popup_done,
+  };  
+  wl_shell_surface_add_listener( shellSurface, &shell_surf_listeners, data );
+  return shellSurface;
+}
+
 WaylandCore::WaylandCore( int width, int height, const char* title )
 : mDisplay(NULL),mRegistry(NULL),mCompositor(NULL),mShm(NULL),
   mShouldClose(false),mFillColor(0xFF0000FF)
@@ -155,18 +167,6 @@ void ImgBuf::fill(uint32_t val){
   }
 }
 
-
-static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,wl_surface* surface,void * data){
-  wl_shell_surface* shellSurface = wl_shell_get_shell_surface( shell, surface );
-  wl_shell_surface_set_title( shellSurface, title );
-  static wl_shell_surface_listener shell_surf_listeners = {
-    shell_surface_handler_ping,
-    shell_surface_handler_configure,
-    shell_surface_handler_popup_done,
-  };  
-  wl_shell_surface_add_listener( shellSurface, &shell_surf_listeners, data );
-  return shellSurface;
-}
 
 void WaylandCore::setFillColor(int32_t col) {
   mFillColor=col;
