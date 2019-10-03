@@ -1,8 +1,9 @@
 #pragma once
 
+#include <iostream>
+#include <string.h>
 #include <stdint.h>
 #include <wayland-client.h>
-#include <string.h>
 
 using namespace std;
 
