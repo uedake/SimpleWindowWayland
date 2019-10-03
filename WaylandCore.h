@@ -38,7 +38,6 @@ class WaylandCore {
     int  getWidth() const   { return mWidth; }
     int  getHeight() const  { return mHeight; }
 
-
   public:
     WaylandCore( int width, int height, const char* title );
     WaylandCore();
@@ -51,8 +50,6 @@ class WaylandCore {
 
     void registry_listener_global( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
     void registry_listener_global_remove( wl_registry* reg, uint32_t name );
-
-  protected:
     virtual void on_resize(int width,int height);
 
   private:
