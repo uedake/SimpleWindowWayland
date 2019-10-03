@@ -117,16 +117,8 @@ void WaylandCore::on_resize(int width,int height){
   }
 }
 
-static int create_shared_fd( int size, string filename, bool keep_filename_visible=true) {
-  char* dir = NULL;
-  int fd = -1;
-  dir = getenv("XDG_RUNTIME_DIR");
-  if( !dir ) {
-    return -1;
-  }
-  string path = dir + "/"s + filename;
-  
-  fd = open( path.c_str(), O_RDWR | O_CREAT);
+static int create_shared_fd( int size, string path, bool keep_filename_visible=true) {
+  int fd = open( path.c_str(), O_RDWR | O_CREAT);
   if( fd >= 0 && !keep_filename_visible) {
     unlink(path.c_str()); //make other process cannot find filename to access the imgbuf
   }
@@ -137,8 +129,7 @@ static int create_shared_fd( int size, string filename, bool keep_filename_visib
   return fd;
 }
 
-
-static int create_shared_fd_auto( int size, bool keep_filename_visible=true) {
+static int create_shared_fd_auto( int size, bool keep_filename_visible=false) {
   static const char fmt[] = "/weston-shared-XXXXXX";
   const char* path = NULL;
   char* name = NULL;
@@ -172,8 +163,13 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
   int stride = width * sizeof(uint32_t);
   size = stride * height;
 
-  string name = "ImgBuf_"+to_string(w) + "_" +to_string(h);
-  int fd = create_shared_fd( size ,name);
+  string filename = "ImgBuf_"+to_string(w) + "_" +to_string(h);
+  char* dir = getenv("XDG_RUNTIME_DIR");
+  if(dir==nullptr)
+    throw "cannot create ImgBuf: XDG_RUNTIME_DIR is not set";
+  filepath = dir + "/"s + filename;
+
+  int fd = create_shared_fd( size ,filepath);
   if( fd < 0 ) {
     throw "cannot create ImgBuf: fail to create shared fd";
   }
@@ -183,6 +179,8 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
   memset( memory, 0x00, size );
   buffer = wl_shm_pool_create_buffer( pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888 );
   wl_shm_pool_destroy( pool ); pool = NULL;
+
+  cout << "ImgBuf created: file path is " filepath << endl;
 }
 
 ImgBuf::~ImgBuf(){

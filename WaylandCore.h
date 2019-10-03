@@ -11,6 +11,7 @@ struct ImgBuf {
   int         size;
   int         width;
   int         height;
+  string      filepath;
 
   ImgBuf(wl_shm* shm,int width, int height);
   ~ImgBuf();
