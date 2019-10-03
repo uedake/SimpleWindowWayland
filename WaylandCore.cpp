@@ -122,7 +122,7 @@ void WaylandCore::on_resize(int width,int height){
 }
 
 static int create_shared_fd( int size, string path, bool keep_filename_visible=true) {
-  int fd = open( path.c_str(), O_RDWR | O_CREAT);
+  int fd = open( path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC);
   if( fd >= 0 && !keep_filename_visible) {
     unlink(path.c_str()); //make other process cannot find filename to access the imgbuf
   }
@@ -190,8 +190,9 @@ ImgBuf::ImgBuf(wl_shm* shm,int w, int h){
 ImgBuf::~ImgBuf(){
   cout << "ImgBuf try to unlink " << filepath << endl;
   unlink(filepath.c_str()); //make other process cannot find filename to access the imgbuf
-  cout << "unlinked " << filepath << endl;
+  cout << "ImgBuf try to destroy buffer" << endl;
   wl_buffer_destroy(buffer);
+  cout << "ImgBuf try to unmap memory" << endl;
   munmap(memory, size);
   cout << "ImgBuf destroyed: file path is " << filepath << endl;
 }
