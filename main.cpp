@@ -23,7 +23,7 @@ static int EVENT_LOOP_WAIT_USEC=10*1000;
 static WaylandCore* mCore=NULL;
 static int WIDTH=640;
 static int HEIGHT=480;
-static string TITLE="DocomoTest";
+static const char* TITLE="DocomoTest";
 
 static void init_window(bool basic){
   if(mCore!=nullptr)
