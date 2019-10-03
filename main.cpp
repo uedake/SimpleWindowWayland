@@ -216,8 +216,10 @@ int main(int argc, char **argv ){
               break;
             cmd+=buff[n];
           }
-          if(handle_cmd(cmd)==1)
-            break;
+          if(cmd!=""){
+            if(handle_cmd(cmd)==1)
+              break;
+          }
           cout << FIRST_PROMPT << flush;
         }
         inotify_read_events(fd);

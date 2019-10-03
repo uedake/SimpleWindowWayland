@@ -1,7 +1,6 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -69,6 +68,9 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
 }
 
 WaylandCore::~WaylandCore(){
+  if( filepath !="") {
+    unlink(filepath.c_str()); //make other process cannot find filename to access the imgbuf
+  }
   if( mShm ) {
     wl_shm_destroy( mShm );
     mShm = NULL;
@@ -90,7 +92,6 @@ WaylandCore::~WaylandCore(){
     delete mImgBuf;
     mImgBuf = NULL;
   }
-
   if(debug_print)
     cout << "WaylandCore destructed" << endl;
 }
