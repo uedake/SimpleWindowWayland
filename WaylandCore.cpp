@@ -209,10 +209,10 @@ WaylandRedrawable::WaylandRedrawable( int width, int height, const char* title )
 
 static void frame_redraw( void* data, wl_callback* callback, uint32_t time )
 {
-  WaylandCore* core = static_cast<WaylandCore*>(data);
+  WaylandRedrawable* wl = static_cast<WaylandRedrawable*>(data);
   if(core){
 	  wl_callback_destroy( callback );  
-    core->redrawWindow();
+    wl->redrawWindow();
   }
 }
 
