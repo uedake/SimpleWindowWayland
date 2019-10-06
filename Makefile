@@ -1,4 +1,4 @@
-TARGET := SimpleWindowWL
+TARGET := disp
 
 .PHONY: $(TARGET) all clean
 
