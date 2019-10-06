@@ -1,12 +1,7 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <poll.h>
 
-#include "WaylandCore.h"
+#include "WaylandRegister.h"
 
 static void handler_global ( 
               void* data,
@@ -36,7 +31,7 @@ static wl_registry_listener global_handlers = {
   handler_global, handler_global_remove
 };
 
-void WaylandRegister::WaylandRegister(wl_display* display)
+WaylandRegister::WaylandRegister(wl_display* display)
 {  
   registry = wl_display_get_registry( display );
   if( registry ) {

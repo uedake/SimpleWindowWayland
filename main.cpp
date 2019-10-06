@@ -1,5 +1,4 @@
 #include <iostream>
-#include "WaylandCore.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +9,9 @@
 #include <sys/inotify.h>
 #include <vector>
 
-#define INOTIFY_EVENT_SIZE  ( sizeof (struct inotify_event) )
-#define INOTIFY_BUF_LEN     ( 1024 * ( INOTIFY_EVENT_SIZE + 16 ) )
+#include "WaylandCore.h"
+#include "DirectoryWatcher.h"
+
 #define CMD_BUF_SIZE (256)
 
 #define FIRST_PROMPT  ">>"
@@ -28,6 +28,11 @@ static const char* TITLE="DocomoTest";
 #define WL_CORE 0
 #define WL_REDRAW 1
 #define WL_REDRAW_SAMPLE 2
+
+static void print_in_prompt(string str){
+  cout << "\n" << str << endl;
+  cout << AFTER_STDOUT_PROMPT << flush;
+}
 
 static void init_window(int type){
   if(mCore!=nullptr)
@@ -73,17 +78,33 @@ static int handle_cmd(string cmd){
     init_window(WL_REDRAW);
   else if (args[0]=="show")
     init_window(WL_REDRAW_SAMPLE);
-  else if (args[0]=="top")
-    mCore->setFullscreen(false);
-  else if (args[0]=="full")
-    mCore->setFullscreen(true);
-  else if (args[0]=="reflect")
-    mCore->refrectBuffer();
+  else if (args[0]=="top"){
+    if(mCore)
+      mCore->setFullscreen(false);
+    else
+      cout << "window has not inited yet" << endl;    
+  }
+  else if (args[0]=="full"){
+    if(mCore)
+      mCore->setFullscreen(true);
+    else
+      cout << "window has not inited yet" << endl;    
+  }
+  else if (args[0]=="reflect"){
+    if(mCore)
+      mCore->refrectBuffer();
+    else
+      cout << "window has not inited yet" << endl;    
+  }
   else if (args[0]=="resize" && argc==3){
     try{
-      int32_t w=stoi(args[1],nullptr,0);
-      int32_t h=stoi(args[2],nullptr,0);
-      mCore->on_resize(w,h);
+      if(mCore){
+        int32_t w=stoi(args[1],nullptr,0);
+        int32_t h=stoi(args[2],nullptr,0);
+        mCore->on_resize(w,h);
+      }
+      else
+        cout << "window has not inited yet" << endl;    
     }
     catch(invalid_argument ex){
       cout << args[1] << " " << args[2]  << " is not a number" << endl;
@@ -91,8 +112,12 @@ static int handle_cmd(string cmd){
   }
   else if (args[0]=="fill" && argc==2){
     try{
-      int32_t col=stoi(args[1],nullptr,0);
-      mCore->setFillColor(col);
+      if(mCore){
+        int32_t col=stoi(args[1],nullptr,0);
+        mCore->setFillColor(col);
+      }
+      else
+        cout << "window has not inited yet" << endl;    
     }
     catch(invalid_argument ex){
       cout << args[1]  << " is not a number" << endl;
@@ -128,67 +153,15 @@ static int set_stdin_nonblocking(bool enable){
   return 0;
 }
 
-static int get_non_blocking_inotify_fd(char *fn){
-  int fd = inotify_init();
-  if (fd == -1) {
-    perror( "inotify_init" );
-    return -1;
+class ReflectImageTrigger: public FileSync{
+  using FileSync::FileSync;
+  void on_receive(int counter) override{
+    if(mCore)
+      mCore->refrectBuffer();
+    else
+      print_in_prompt("window has not inited yet");    
   }
-  fcntl (fd, F_SETFL, fcntl (fd, F_GETFL) | O_NONBLOCK);
-
-  cout << "watching " << fn << endl;  
-  int wd = inotify_add_watch( fd, fn, 
-            IN_MODIFY | IN_DELETE | IN_CREATE);
-  if (wd==-1){
-    perror( "inotify_add_watch" );
-    close(fd);
-    return -1;
-  }    
-  return fd;
-}
-
-static void print_in_prompt(string str){
-  cout << "\n" << str << endl;
-  cout << AFTER_STDOUT_PROMPT << flush;
-}
-
-static void handle_file_modify(string name){
-  print_in_prompt(name + " is modified");
-}
-static void handle_file_create(string name){
-  print_in_prompt(name + " is created");
-}
-static void handle_file_delete(string name){
-  print_in_prompt(name + " is deleted");
-}
-
-static int inotify_read_events( int fd )
-{
-  char buffer[INOTIFY_BUF_LEN];
-  int length = read( fd, buffer, INOTIFY_BUF_LEN );
-  if( length < 0 ) return -1;
-
-  int count = 0;
-  int i=0;
-  while ( i < length ) {
-        struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
-
-        char* name=(char*)"file";
-        if(event->len>0)
-          name=event->name;
-
-        if(event->mask & IN_CREATE )
-          handle_file_create(name);
-        if(event->mask & IN_MODIFY )
-          handle_file_modify(name);
-        if(event->mask & IN_DELETE)
-          handle_file_delete(name);
-
-        i += INOTIFY_EVENT_SIZE + event->len;
-        count++;
-  }
-  return count;
-}
+};
 
 int main(int argc, char **argv ){
 
@@ -196,13 +169,16 @@ int main(int argc, char **argv ){
     cerr <<  "Usage:" << argv[0] << " filepath" << endl;
     return 1;
   }
- 
-  int fd =  get_non_blocking_inotify_fd(argv[1]);
-  if(fd==-1)
+
+  ReflectImageTrigger* dw;
+  try{ 
+    dw = new ReflectImageTrigger(argv[1],"rcv","ack",print_in_prompt);
+  }
+  catch(...){
     return 2;
+  }
 
   try{
-    //init_window();    
     if(set_stdin_nonblocking(true)==-1){
       return 3;
     }
@@ -224,7 +200,7 @@ int main(int argc, char **argv ){
           }
           cout << FIRST_PROMPT << flush;
         }
-        inotify_read_events(fd);
+        dw->poll();
         if(mCore!=NULL)
           mCore->pollEvents();
         usleep(EVENT_LOOP_WAIT_USEC);
@@ -233,7 +209,7 @@ int main(int argc, char **argv ){
   catch(...){
     cout << "exception occured" << endl;
   }
-  close(fd);
+  delete dw; dw=nullptr;
   set_stdin_nonblocking(false);
   delete mCore;mCore = NULL;
   cout << "Exited" << endl;

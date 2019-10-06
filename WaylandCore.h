@@ -1,36 +1,8 @@
 #pragma once
 
-#include <iostream>
-#include <string.h>
-#include <stdint.h>
 #include <wayland-client.h>
-
-using namespace std;
-
-struct WaylandRegister{
-  wl_registry* mRegistry;
-  wl_compositor* mCompositor;
-  wl_shell*   mShell;
-  wl_shm* mShm;  
-
-  WaylandRegister(wl_display* display);
-  ~WaylandRegister();
-  void registry_listener_global( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
-  void registry_listener_global_remove( wl_registry* reg, uint32_t name );
-};
-
-struct ImgBuf {
-  wl_buffer*  buffer;
-  void*       memory;
-  int         size;
-  int         width;
-  int         height;
-  string      filepath;
-
-  ImgBuf(wl_shm* shm,int width, int height);
-  ~ImgBuf();
-  void fill(uint32_t val);
-};
+#include "WaylandRegister.h"
+#include "ImgBuf.h"
 
 class WaylandCore {
 
@@ -38,13 +10,13 @@ class WaylandCore {
     wl_surface* mSurface;
     ImgBuf* mImgBuf;
     bool debug_print=true;
-    bool mShouldClose;
     int32_t mFillColor;
 
   private:
     wl_display* mDisplay;
     wl_shell_surface* mShellSurface;
     WaylandRegister* mReg;
+    bool mShouldClose;
 
   public:
     bool isShouldClose() const { return mShouldClose; }
