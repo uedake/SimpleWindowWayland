@@ -22,7 +22,6 @@ DirectoryWatcher::DirectoryWatcher(string dir_path,void (*log_func)(string)){
   }
   fcntl (fd, F_SETFL, fcntl (fd, F_GETFL) | O_NONBLOCK);
 
-  cout << "watching " << dir_path << endl;  
   wd = inotify_add_watch( fd, dir_path.c_str(), 
             IN_MODIFY | IN_DELETE | IN_CREATE);
   if (wd==-1){

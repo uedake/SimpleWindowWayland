@@ -64,14 +64,14 @@ static vector<string> split(const string &s, char delim) {
     return elems;
 }
 
-static int handle_cmd(string cmd){
+static int handle_cmd(string cmd,string program){
   vector<string> args=split(cmd,' ');
   int argc =args.size();
 
   if (args[0]=="exit")
     return 1;
   else if (args[0]=="help")
-    cout << "Here is help" << endl;
+    cerr <<  "Usage:" << program << " [filepath]" << endl;
   else if(args[0]=="show" && argc==2 && args[1]=="core")
     init_window(WL_CORE);
   else if(args[0]=="show" && argc==2 && args[1]=="redraw")
@@ -164,22 +164,33 @@ class ReflectImageTrigger: public FileSync{
 };
 
 int main(int argc, char **argv ){
+  const char* path = NULL;
 
-  if  ( argc != 2 ) {
-    cerr <<  "Usage:" << argv[0] << " filepath" << endl;
+  if  ( argc >= 2 ) {
+    path = argv[1];
+  }
+  else{
+    path = getenv("XDG_RUNTIME_DIR");
+  }
+  if( !path) {
+    cerr << "set XDG_RUNTIME_DIR or supply argv[1]" << endl;
     return 1;
   }
 
+  cout << "set watching dir:" << path << endl;  
+
   ReflectImageTrigger* dw;
   try{ 
-    dw = new ReflectImageTrigger(argv[1],"rcv","ack",print_in_prompt);
+    dw = new ReflectImageTrigger(path,"rcv","ack",print_in_prompt);
   }
   catch(...){
+    cerr << "cannot create triger" << endl;
     return 2;
   }
 
   try{
     if(set_stdin_nonblocking(true)==-1){
+      cerr << "cannot set stdin non-blocking" << endl;
       return 3;
     }
 
@@ -195,7 +206,7 @@ int main(int argc, char **argv ){
             cmd+=buff[n];
           }
           if(cmd!=""){
-            if(handle_cmd(cmd)==1)
+            if(handle_cmd(cmd,argv[0])==1)
               break;
           }
           cout << FIRST_PROMPT << flush;
@@ -207,7 +218,7 @@ int main(int argc, char **argv ){
     }
   }
   catch(...){
-    cout << "exception occured" << endl;
+    cerr << "exception occured" << endl;
   }
   delete dw; dw=nullptr;
   set_stdin_nonblocking(false);
