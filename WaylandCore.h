@@ -7,6 +7,18 @@
 
 using namespace std;
 
+struct WaylandRegister{
+  wl_registry* mRegistry;
+  wl_compositor* mCompositor;
+  wl_shell*   mShell;
+  wl_shm* mShm;  
+
+  WaylandRegister(wl_display* display);
+  ~WaylandRegister();
+  void registry_listener_global( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
+  void registry_listener_global_remove( wl_registry* reg, uint32_t name );
+};
+
 struct ImgBuf {
   wl_buffer*  buffer;
   void*       memory;
@@ -26,18 +38,13 @@ class WaylandCore {
     wl_surface* mSurface;
     ImgBuf* mImgBuf;
     bool debug_print=true;
+    bool mShouldClose;
+    int32_t mFillColor;
 
   private:
     wl_display* mDisplay;
-    wl_registry* mRegistry;
-    wl_compositor* mCompositor;
-    wl_shell*   mShell;
-    wl_shm* mShm;  
     wl_shell_surface* mShellSurface;
-
-  protected:
-    bool mShouldClose;
-    int32_t mFillColor;
+    WaylandRegister* mReg;
 
   public:
     bool isShouldClose() const { return mShouldClose; }
@@ -53,12 +60,7 @@ class WaylandCore {
     void setFillColor(int32_t col);
     void refrectBuffer();
 
-    void registry_listener_global( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
-    void registry_listener_global_remove( wl_registry* reg, uint32_t name );
     virtual void on_resize(int width,int height);
-
-  private:
-    void setup_registry_handlers();    
 };
 
 class WaylandRedrawable :public WaylandCore{

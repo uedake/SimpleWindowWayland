@@ -44,22 +44,17 @@ static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,
 }
 
 WaylandCore::WaylandCore( int width, int height, const char* title )
-: mDisplay(NULL),mRegistry(NULL),mCompositor(NULL),mShm(NULL),
-  mShouldClose(false),mFillColor(0xFF0000FF)
+: mDisplay(NULL),mReg(NULL),mShouldClose(false),mFillColor(0xFF0000FF)
 {
   mDisplay = wl_display_connect(NULL);
-  setup_registry_handlers();//wait till registory is available
+  mReg = new WaylandRegister(mDisplay);//wait till registory is available
   
-  if( mDisplay ) {
-    mRegistry = wl_display_get_registry( mDisplay );
-  }
-
-  if( mDisplay == NULL || mCompositor == NULL ) {
+  if( mDisplay == NULL || mReg->compositor == NULL ) {
     throw "WaylandCore: unexpected error";
   }
 
-  mSurface = wl_compositor_create_surface( mCompositor );
-  mShellSurface = createShellSurface(title, mShell, mSurface, this);
+  mSurface = wl_compositor_create_surface( mReg->compositor );
+  mShellSurface = createShellSurface(title, mReg->shell, mSurface, this);
   setFullscreen(false);
   on_resize(width,height);
   if(debug_print)
@@ -69,31 +64,23 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
 WaylandCore::~WaylandCore(){
   if(debug_print)
     cout << "WaylandCore start destroying" << endl;
-
-  if( mShm ) {
-    wl_shm_destroy( mShm );
-    mShm = NULL;
-  }
-  if( mCompositor ) {
-    wl_compositor_destroy( mCompositor );
-    mCompositor = NULL;
-  }
-  if( mRegistry ) {
-    wl_registry_destroy( mRegistry );
-    mRegistry = NULL;
+  if(mReg){
+    delete mReg; 
+    mReg = NULL;
   }
   if( mDisplay ) {
     wl_display_flush( mDisplay );
     wl_display_disconnect( mDisplay );
     mDisplay = NULL;
   }
+
   if(debug_print)
     cout << "WaylandCore try to delete mImgBuf" << endl;
-
   if( mImgBuf ) {
     delete mImgBuf;
     mImgBuf = NULL;
   }
+
   if(debug_print)
     cout << "WaylandCore destructed" << endl;
 }
@@ -113,7 +100,7 @@ void WaylandCore::on_resize(int width,int height){
     }
     if(debug_print)
       cout << "start creating buffer: w="<< width << ",h="<<height<< endl;
-    mImgBuf = new ImgBuf(mShm,width,height);
+    mImgBuf = new ImgBuf(mReg->shm,width,height);
     setFillColor( mFillColor);
   }
   catch(...){

@@ -6,7 +6,7 @@ all: $(TARGET)
 
 SOURCES := \
 	WaylandCore.cpp \
-	WaylandCore_registry_handlers.cpp \
+	WaylandRegister.cpp \
 	main.cpp \
 
 LIBRARYS := \
