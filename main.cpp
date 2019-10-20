@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "WaylandCore.h"
-#include "DirectoryWatcher.h"
 
 #define CMD_BUF_SIZE (256)
 
@@ -153,45 +152,12 @@ static int set_stdin_nonblocking(bool enable){
   return 0;
 }
 
-class ReflectImageTrigger: public FileSync{
-  using FileSync::FileSync;
-  void on_receive(int counter) override{
-    if(mCore)
-      mCore->refrectBuffer();
-    else
-      print_in_prompt("window has not inited yet");    
-  }
-};
-
 int main(int argc, char **argv ){
-  const char* path = NULL;
-
-  if  ( argc >= 2 ) {
-    path = argv[1];
-  }
-  else{
-    path = getenv("XDG_RUNTIME_DIR");
-  }
-  if( !path) {
-    cerr << "set XDG_RUNTIME_DIR or supply argv[1]" << endl;
-    return 1;
-  }
-
-  cout << "set watching dir:" << path << endl;  
-
-  ReflectImageTrigger* dw;
-  try{ 
-    dw = new ReflectImageTrigger(path,"rcv","ack",print_in_prompt);
-  }
-  catch(...){
-    cerr << "cannot create triger" << endl;
-    return 2;
-  }
 
   try{
     if(set_stdin_nonblocking(true)==-1){
       cerr << "cannot set stdin non-blocking" << endl;
-      return 3;
+      return 1;
     }
 
     char buff[CMD_BUF_SIZE]={};
@@ -211,16 +177,16 @@ int main(int argc, char **argv ){
           }
           cout << FIRST_PROMPT << flush;
         }
-        dw->poll();
-        if(mCore!=NULL)
+        if(mCore!=NULL){
+          mCore->pollImgbufChange();
           mCore->pollEvents();
+        }
         usleep(EVENT_LOOP_WAIT_USEC);
     }
   }
   catch(...){
     cerr << "exception occured" << endl;
   }
-  delete dw; dw=nullptr;
   set_stdin_nonblocking(false);
   delete mCore;mCore = NULL;
   cout << "Exited" << endl;

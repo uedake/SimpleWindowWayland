@@ -13,6 +13,11 @@ void simple_print(string str){
   cout << str << endl;
 }
 
+void simple_callback(string str,int counter){
+  cout << "rcv = " + to_string(counter) << endl;
+}
+
+
 DirectoryWatcher::DirectoryWatcher(string dir_path,void (*log_func)(string)){
   fd = inotify_init();
   log=log_func;
@@ -74,8 +79,9 @@ int DirectoryWatcher::poll()
   return count;
 }
 
-FileSync::FileSync(string dir_path,string rcv_file_name,string ack_file_name,void (*log_func)(string))
+FileSync::FileSync(string dir_path,string rcv_file_name,string ack_file_name,void (*log_func)(string),void (*receive_callback_func)(string,int))
 : DirectoryWatcher(dir_path,log_func){
+    receive_callback=receive_callback_func;
     rcv_fn=rcv_file_name;
     ack_fn=ack_file_name;
 
@@ -105,7 +111,7 @@ FileSync::FileSync(string dir_path,string rcv_file_name,string ack_file_name,voi
     cout << "rcv = " << rcv << endl;
 }
 void FileSync::on_receive(int counter){
-    log("rcv = " + to_string(counter));
+    receive_callback(rcv_path,counter);
 }
 
 void FileSync::handle_file_modify(string name){

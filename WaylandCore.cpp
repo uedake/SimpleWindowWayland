@@ -10,6 +10,16 @@
 
 using namespace std;
 
+ReflectImageTrigger::ReflectImageTrigger(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name)
+:FileSync(dir_path,rcv_file_name,ack_file_name){
+    mCore=core;
+}
+
+void ReflectImageTrigger::on_receive(int counter){
+    if(mCore)
+      mCore->refrectBuffer();
+}
+
 static void shell_surface_handler_ping(
   void *data, 
   struct wl_shell_surface *shell_surface,
@@ -45,7 +55,7 @@ static wl_shell_surface* createShellSurface(const char* title,wl_shell*   shell,
 }
 
 WaylandCore::WaylandCore( int width, int height, const char* title )
-: mDisplay(NULL),mReg(NULL),mShouldClose(false),mFillColor(0xFF0000FF)
+: mImgBuf(NULL),mTrigger(NULL),mShouldClose(false),mFillColor(0xFF0000FF)
 {
   mDisplay = wl_display_connect(NULL);
   mReg = new WaylandRegister(mDisplay);//wait till registory is available
@@ -65,6 +75,10 @@ WaylandCore::WaylandCore( int width, int height, const char* title )
 WaylandCore::~WaylandCore(){
   if(debug_print)
     cout << "WaylandCore start destroying" << endl;
+  if(mTrigger){
+    delete mTrigger;
+    mTrigger = NULL;
+  }
   if(mReg){
     delete mReg; 
     mReg = NULL;
@@ -102,12 +116,12 @@ void WaylandCore::on_resize(int width,int height){
       cout << "start creating buffer: w="<< width << ",h="<<height<< endl;
     mImgBuf = new ImgBuf(mReg->shm,width,height);
     setFillColor( mFillColor);
+    on_imgbuf_created(mImgBuf->filepath);
   }
   catch(...){
     throw "WaylandCore: failed to create buffer";
   }
 }
-
 
 void WaylandCore::refrectBuffer(){
   wl_surface_attach( mSurface, mImgBuf->buffer, 0, 0 );
@@ -136,6 +150,31 @@ void WaylandCore::waitEvents() {
   return;
 }
 
+void WaylandCore::on_imgbuf_created(string file_path){
+  try{
+    size_t botDirPos = file_path.find_last_of("/");
+    string dir = file_path.substr(0, botDirPos);
+    string fn = file_path.substr(botDirPos+1);
+
+    if(mTrigger){
+      delete mTrigger;
+    }
+    mTrigger = new ReflectImageTrigger(this,dir,fn+".rcv",fn+".ack");
+  }
+  catch(...){
+    cerr << "cannot create triger" << endl;
+  }
+}
+
+void WaylandCore::pollImgbufChange(){
+  if( mDisplay == NULL || mReg->registry == NULL ) {
+    mShouldClose = true;
+    return;
+  }
+  if(mTrigger){
+    mTrigger->poll();
+  }
+}
 void WaylandCore::pollEvents() {
   if( mDisplay == NULL || mReg->registry == NULL ) {
     mShouldClose = true;

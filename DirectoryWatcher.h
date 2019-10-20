@@ -8,6 +8,7 @@
 using namespace std;
 
 void simple_print(string str);
+void simple_callback(string str,int counter);
 
 class DirectoryWatcher {
     int fd;
@@ -33,12 +34,13 @@ class FileSync:public DirectoryWatcher {
   int rcv;
 
   public:
-    FileSync(string dir_path,string rcv_file_name,string ack_file_name,void (*log_func)(string) = simple_print);
+    FileSync(string dir_path,string rcv_file_name,string ack_file_name,void (*log_func)(string) = simple_print,void (*receive_callback_func)(string,int) = simple_callback);
 
   protected:
     void handle_file_modify(string name) override;
     void handle_file_delete(string name) override;
     void handle_file_create(string name) override;
+    void (*receive_callback)(string,int);
 
     virtual void on_receive(int counter) ;
 };
