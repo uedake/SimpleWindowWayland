@@ -100,13 +100,17 @@ FileSync::FileSync(string dir_path,string rcv_file_name,string ack_file_name,voi
         close(fd);
         umask(before);
         ofstream ofs(rcv_path);
-        ofs << "0";
+        ofs.fill( '0' );    
+        ofs.width( 8 );
+        ofs << 0;
         ofs.close();
         rcv=0;
     }
     else{
-        ifs >> rcv;
+        string line;
+        ifs >> line;
         ifs.close();
+        rcv=stoi(line,nullptr,10);
     }
     cout << "rcv = " << rcv << endl;
 }
@@ -117,14 +121,17 @@ void FileSync::on_receive(int counter){
 void FileSync::handle_file_modify(string name){
     if(rcv_fn==name){
         ifstream ifs(rcv_path);
-        int r;
-        ifs >> r;
+        string line;
+        ifs >> line;
         ifs.close();
+        int r=stoi(line,nullptr,10);
 
         if(rcv<r){
             rcv=r;
             on_receive(r);
             ofstream ofs(ack_path);
+            ofs.fill( '0' );    
+            ofs.width( 8 );
             ofs << rcv;
             ofs.close();
         }
