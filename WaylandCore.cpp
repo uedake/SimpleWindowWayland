@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <fstream>
 #include <sys/stat.h>
 
 #include "WaylandCore.h"
