@@ -16,6 +16,22 @@ class ReflectImageTrigger: public FileSync{
     void on_receive(int counter) override;
 };
 
+class ReflectImageTrigger2{
+  string rcv_fn;
+  string ack_fn;
+  string rcv_path;
+  string ack_path;
+  int rcv;
+
+  private:
+    WaylandCore* mCore;
+    int poll();
+
+  public:
+    ReflectImageTrigger2(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name);
+    void on_receive(int counter);
+};
+
 
 class WaylandCore {
 
@@ -30,7 +46,7 @@ class WaylandCore {
     wl_shell_surface* mShellSurface;
     WaylandRegister* mReg;
     bool mShouldClose;
-    ReflectImageTrigger* mTrigger;    
+    ReflectImageTrigger2* mTrigger;    
 
   public:
     bool isShouldClose() const { return mShouldClose; }

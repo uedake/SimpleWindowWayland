@@ -20,6 +20,66 @@ void ReflectImageTrigger::on_receive(int counter){
       mCore->refrectBuffer();
 }
 
+ReflectImageTrigger2::ReflectImageTrigger2(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name){
+    mCore=core;
+
+    rcv_fn=rcv_file_name;
+    ack_fn=ack_file_name;
+
+    rcv_path=dir_path+"/"+rcv_file_name;
+    ack_path=dir_path+"/"+ack_file_name;
+
+    ifstream ifs(rcv_path);
+    if (!ifs)
+    {
+        cout << "cannot open file:" << rcv_path << ". create it." << endl;
+        mode_t before=umask(0);
+        int fd = creat(rcv_path.c_str(), 0666);
+        if (fd == -1){
+            throw "Exception";
+        }
+        close(fd);
+        umask(before);
+        ofstream ofs(rcv_path);
+        ofs.fill( '0' );    
+        ofs.width( 8 );
+        ofs << 0;
+        ofs.close();
+        rcv=0;
+    }
+    else{
+        string line;
+        ifs >> line;
+        ifs.close();
+        rcv=stoi(line,nullptr,10);
+    }
+    cout << "rcv = " << rcv << endl;
+}
+
+int ReflectImageTrigger2::poll(){
+    ifstream ifs(rcv_path);
+    string line;
+    ifs >> line;
+    ifs.close();
+    int r=stoi(line,nullptr,10);
+
+    if(rcv<r){
+        rcv=r;
+        on_receive(r);
+        ofstream ofs(ack_path);
+        ofs.fill( '0' );    
+        ofs.width( 8 );
+        ofs << rcv;
+        ofs.close();
+    }
+}
+
+void ReflectImageTrigger2::on_receive(int counter){
+    if(mCore)
+      mCore->refrectBuffer();
+}
+
+
 static void shell_surface_handler_ping(
   void *data, 
   struct wl_shell_surface *shell_surface,
