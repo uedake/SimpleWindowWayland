@@ -222,7 +222,7 @@ void WaylandCore::on_imgbuf_created(string file_path){
     if(mTrigger){
       delete mTrigger;
     }
-    mTrigger = new ReflectImageTrigger(this,dir,fn+".rcv",fn+".ack");
+    mTrigger = new ReflectImageTrigger2(this,dir,fn+".rcv",fn+".ack");
   }
   catch(...){
     cerr << "cannot create triger" << endl;
