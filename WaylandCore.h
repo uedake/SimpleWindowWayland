@@ -25,11 +25,11 @@ class ReflectImageTrigger2{
 
   private:
     WaylandCore* mCore;
-    int poll();
 
   public:
     ReflectImageTrigger2(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name);
     void on_receive(int counter);
+    int poll();
 };
 
 
