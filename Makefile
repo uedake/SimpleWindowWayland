@@ -8,7 +8,6 @@ SOURCES := \
 	WaylandCore.cpp \
 	WaylandRegister.cpp \
 	ImgBuf.cpp \
-	DirectoryWatcher.cpp \
 	main.cpp \
 
 LIBRARYS := \

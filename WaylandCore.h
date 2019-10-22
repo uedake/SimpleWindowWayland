@@ -3,20 +3,10 @@
 #include <wayland-client.h>
 #include "WaylandRegister.h"
 #include "ImgBuf.h"
-#include "DirectoryWatcher.h"
 
 class WaylandCore;
 
-class ReflectImageTrigger: public FileSync{
-  private:
-    WaylandCore* mCore;
-
-  public:
-    ReflectImageTrigger(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name);
-    void on_receive(int counter) override;
-};
-
-class ReflectImageTrigger2{
+class ImgBufRedrawTrigger{
   string rcv_fn;
   string ack_fn;
   string rcv_path;
@@ -27,7 +17,8 @@ class ReflectImageTrigger2{
     WaylandCore* mCore;
 
   public:
-    ReflectImageTrigger2(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name);
+    ImgBufRedrawTrigger(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name);
+    ~ImgBufRedrawTrigger();
     void on_receive(int counter);
     int poll();
 };
@@ -46,7 +37,7 @@ class WaylandCore {
     wl_shell_surface* mShellSurface;
     WaylandRegister* mReg;
     bool mShouldClose;
-    ReflectImageTrigger2* mTrigger;    
+    ImgBufRedrawTrigger* mTrigger;    
 
   public:
     bool isShouldClose() const { return mShouldClose; }

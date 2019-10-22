@@ -13,17 +13,7 @@
 
 using namespace std;
 
-ReflectImageTrigger::ReflectImageTrigger(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name)
-:FileSync(dir_path,rcv_file_name,ack_file_name){
-    mCore=core;
-}
-
-void ReflectImageTrigger::on_receive(int counter){
-    if(mCore)
-      mCore->refrectBuffer();
-}
-
-ReflectImageTrigger2::ReflectImageTrigger2(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name){
+ImgBufRedrawTrigger::ImgBufRedrawTrigger(WaylandCore* core,string dir_path,string rcv_file_name,string ack_file_name){
     mCore=core;
 
     rcv_fn=rcv_file_name;
@@ -59,7 +49,14 @@ ReflectImageTrigger2::ReflectImageTrigger2(WaylandCore* core,string dir_path,str
     cout << "rcv = " << rcv << endl;
 }
 
-int ReflectImageTrigger2::poll(){
+ImgBufRedrawTrigger::~ImgBufRedrawTrigger(){
+    cout << "ImgBufRedrawTrigger try to unlink " << rcv_path << endl;
+    unlink(rcv_path.c_str()); //make other process cannot find filename to access the imgbuf
+    cout << "ImgBufRedrawTrigger try to unlink " << ack_path << endl;
+    unlink(ack_path.c_str()); //make other process cannot find filename to access the imgbuf
+}
+
+int ImgBufRedrawTrigger::poll(){
     ifstream ifs(rcv_path);
     string line;
     ifs >> line;
@@ -77,7 +74,7 @@ int ReflectImageTrigger2::poll(){
     }
 }
 
-void ReflectImageTrigger2::on_receive(int counter){
+void ImgBufRedrawTrigger::on_receive(int counter){
     if(mCore)
       mCore->refrectBuffer();
 }
@@ -222,7 +219,7 @@ void WaylandCore::on_imgbuf_created(string file_path){
     if(mTrigger){
       delete mTrigger;
     }
-    mTrigger = new ReflectImageTrigger2(this,dir,fn+".rcv",fn+".ack");
+    mTrigger = new ImgBufRedrawTrigger(this,dir,fn+".rcv",fn+".ack");
   }
   catch(...){
     cerr << "cannot create triger" << endl;
