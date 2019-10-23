@@ -211,11 +211,12 @@ void WaylandCore::waitEvents() {
 }
 
 void WaylandCore::on_imgbuf_created(string file_path){
+  size_t splitPos = file_path.find_last_of("/");
+  string dir = file_path.substr(0, splitPos);
+  string fn = file_path.substr(splitPos+1);
   try{
-    size_t botDirPos = file_path.find_last_of("/");
-    string dir = file_path.substr(0, botDirPos);
-    string fn = file_path.substr(botDirPos+1);
 
+    //delete old trigger and create new one
     if(mTrigger){
       delete mTrigger;
     }
@@ -223,6 +224,15 @@ void WaylandCore::on_imgbuf_created(string file_path){
   }
   catch(...){
     cerr << "cannot create triger" << endl;
+  }
+
+  try{
+    ofstream ofs(dir+"/ImgBuf.info");
+    ofs << fn;
+    ofs.close();
+  }
+  catch(...){
+    cerr << "cannot create info file" << endl;
   }
 }
 
