@@ -177,11 +177,11 @@ int main(int argc, char **argv ){
           }
           cout << FIRST_PROMPT << flush;
         }
+        usleep(EVENT_LOOP_WAIT_USEC);
         if(mCore!=NULL){
           mCore->pollImgbufChange();
           mCore->pollEvents();
         }
-        usleep(EVENT_LOOP_WAIT_USEC);
     }
   }
   catch(...){
